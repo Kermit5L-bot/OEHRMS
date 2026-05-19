@@ -1,0 +1,135 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum AdminRole {
+  admin
+  marketer
+}
+
+enum AdminStatus {
+  active
+  disabled
+}
+
+enum ShowroomType {
+  company
+  training_base
+}
+
+enum ShowroomStatus {
+  open
+  closed
+}
+
+enum VisitTimeSlot {
+  morning
+  afternoon
+}
+
+enum AppointmentStatus {
+  pending
+  approved
+  rejected
+  completed
+  cancelled
+}
+
+model AdminUser {
+  id                   Int           @id @default(autoincrement())
+  username             String        @unique
+  passwordHash         String        @map("password_hash")
+  realName             String        @map("real_name")
+  role                 AdminRole     @default(admin)
+  status               AdminStatus   @default(active)
+  approvedAppointments Appointment[] @relation("AppointmentApprover")
+  createdAt            DateTime      @default(now()) @map("created_at")
+  updatedAt            DateTime      @updatedAt @map("updated_at")
+
+  @@map("admin_users")
+}
+
+model Showroom {
+  id                Int            @id @default(autoincrement())
+  name              String         @unique
+  city              String
+  type              ShowroomType
+  coverImage        String?        @map("cover_image")
+  summary           String
+  description       String?
+  address           String?
+  openingHours      String?        @map("opening_hours")
+  suggestedDuration String?        @map("suggested_duration")
+  status            ShowroomStatus @default(open)
+  sortOrder         Int            @default(0) @map("sort_order")
+  appointments      Appointment[]  @relation("ShowroomAppointments")
+  latestLeads       Lead[]         @relation("LeadLatestShowroom")
+  createdAt         DateTime       @default(now()) @map("created_at")
+  updatedAt         DateTime       @updatedAt @map("updated_at")
+
+  @@map("showrooms")
+}
+
+model Appointment {
+  id              Int               @id @default(autoincrement())
+  appointmentNo   String            @unique @map("appointment_no")
+  showroomId      Int               @map("showroom_id")
+  showroom        Showroom          @relation("ShowroomAppointments", fields: [showroomId], references: [id])
+  leadId          Int?              @map("lead_id")
+  lead            Lead?             @relation("LeadAppointments", fields: [leadId], references: [id])
+  visitDate       DateTime          @map("visit_date")
+  visitTimeSlot   VisitTimeSlot     @map("visit_time_slot")
+  visitorCount    Int               @map("visitor_count")
+  contactName     String            @map("contact_name")
+  contactPhone    String            @map("contact_phone")
+  companyName     String            @map("company_name")
+  position        String?
+  industry        String?
+  visitPurpose    String?           @map("visit_purpose")
+  needGuide       Boolean           @default(true) @map("need_guide")
+  customerRemark  String?           @map("customer_remark")
+  status          AppointmentStatus @default(pending)
+  approvalOpinion String?           @map("approval_opinion")
+  rejectReason    String?           @map("reject_reason")
+  approvedById    Int?              @map("approved_by")
+  approvedBy      AdminUser?        @relation("AppointmentApprover", fields: [approvedById], references: [id])
+  approvedAt      DateTime?         @map("approved_at")
+  receptionist    String?
+  receptionNote   String?           @map("reception_note")
+  followUpNote    String?           @map("follow_up_note")
+  latestForLead   Lead?             @relation("LeadLatestAppointment")
+  createdAt       DateTime          @default(now()) @map("created_at")
+  updatedAt       DateTime          @updatedAt @map("updated_at")
+
+  @@index([showroomId])
+  @@index([leadId])
+  @@index([status])
+  @@index([visitDate])
+  @@map("appointments")
+}
+
+model Lead {
+  id                  Int           @id @default(autoincrement())
+  contactName         String        @map("contact_name")
+  contactPhone        String        @unique @map("contact_phone")
+  companyName         String        @map("company_name")
+  position            String?
+  industry            String?
+  latestShowroomId    Int?          @map("latest_showroom_id")
+  latestShowroom      Showroom?     @relation("LeadLatestShowroom", fields: [latestShowroomId], references: [id])
+  latestAppointmentId Int?          @unique @map("latest_appointment_id")
+  latestAppointment   Appointment?  @relation("LeadLatestAppointment", fields: [latestAppointmentId], references: [id])
+  appointments        Appointment[] @relation("LeadAppointments")
+  appointmentCount    Int           @default(0) @map("appointment_count")
+  followUpNote        String?       @map("follow_up_note")
+  createdAt           DateTime      @default(now()) @map("created_at")
+  updatedAt           DateTime      @updatedAt @map("updated_at")
+
+  @@index([latestShowroomId])
+  @@map("leads")
+}

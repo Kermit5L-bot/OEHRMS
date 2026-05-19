@@ -1,0 +1,12 @@
+.next
+node_modules
+.npm-cache
+dist
+build
+.env
+.env*.local
+*.tsbuildinfo
+*.log
+*.db
+*.db-journal
+.codex-ssh/
