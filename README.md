@@ -36,6 +36,30 @@ npm run prisma:deploy
 npm run prisma:seed
 ```
 
+## 展厅封面图上传
+
+后台展厅管理页支持上传展厅封面图，图片会保存到服务器本地目录：
+
+```text
+public/uploads/showrooms
+```
+
+数据库 `showrooms.coverImage` 字段只保存可访问路径，例如：
+
+```text
+/uploads/showrooms/xxx.webp
+```
+
+上传限制：
+
+- 推荐图片尺寸：1600×900px。
+- 最低建议尺寸：1200×675px。
+- 建议使用 16:9 横版图片。
+- 支持格式：JPG、PNG、WebP。
+- 最大文件大小：5MB。
+
+公司服务器部署时，需要确保 `public/uploads/showrooms` 目录存在并具备写入权限。如果使用 PM2/Nginx 部署，需要确认 `/uploads/showrooms/*` 静态资源可以被正常访问。
+
 4. 启动开发服务器：
 
 ```bash
@@ -66,6 +90,19 @@ npm run prisma:migrate -- --name init_database
 
 ```bash
 npm run prisma:deploy
+```
+
+阶段 9.5-3 新增迁移：
+
+```text
+20260519150000_add_customer_and_reception_fields
+```
+
+本迁移为 `appointments` 增加客户类型、关注方向、方案交流及内部接待安排字段，为 `leads` 增加客户线索沉淀字段。所有新增业务字段均为可选字段，已有预约、审批、留资和展厅数据可直接保留。更新代码后请先执行：
+
+```bash
+npm run prisma:deploy
+npm run prisma:generate
 ```
 
 执行 seed：

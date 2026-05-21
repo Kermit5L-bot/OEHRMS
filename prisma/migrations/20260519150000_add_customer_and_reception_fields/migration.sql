@@ -1,0 +1,24 @@
+ALTER TABLE "appointments" ADD COLUMN "customer_type" TEXT;
+ALTER TABLE "appointments" ADD COLUMN "interest_areas" TEXT;
+ALTER TABLE "appointments" ADD COLUMN "need_solution_consulting" TEXT;
+ALTER TABLE "appointments" ADD COLUMN "applicant_name" TEXT;
+ALTER TABLE "appointments" ADD COLUMN "internal_contact_info" TEXT;
+ALTER TABLE "appointments" ADD COLUMN "customer_level" TEXT;
+ALTER TABLE "appointments" ADD COLUMN "main_visitor_info" TEXT;
+ALTER TABLE "appointments" ADD COLUMN "visit_start_time" DATETIME;
+ALTER TABLE "appointments" ADD COLUMN "visit_end_time" DATETIME;
+ALTER TABLE "appointments" ADD COLUMN "actual_reception_location" TEXT;
+ALTER TABLE "appointments" ADD COLUMN "need_vehicle" TEXT;
+ALTER TABLE "appointments" ADD COLUMN "vehicle_requirement" TEXT;
+ALTER TABLE "appointments" ADD COLUMN "need_accommodation" TEXT;
+ALTER TABLE "appointments" ADD COLUMN "accommodation_requirement" TEXT;
+ALTER TABLE "appointments" ADD COLUMN "need_dining" TEXT;
+ALTER TABLE "appointments" ADD COLUMN "dining_requirement" TEXT;
+ALTER TABLE "appointments" ADD COLUMN "gift_preparation" TEXT;
+ALTER TABLE "appointments" ADD COLUMN "gift_requirement" TEXT;
+ALTER TABLE "appointments" ADD COLUMN "reception_schedule_note" TEXT;
+ALTER TABLE "appointments" ADD COLUMN "reception_preparation_note" TEXT;
+
+ALTER TABLE "leads" ADD COLUMN "customer_type" TEXT;
+ALTER TABLE "leads" ADD COLUMN "interest_areas" TEXT;
+ALTER TABLE "leads" ADD COLUMN "need_solution_consulting" TEXT;

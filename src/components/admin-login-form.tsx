@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { LogIn } from "lucide-react";
 
 type LoginErrors = {
   username?: string;
@@ -69,7 +70,7 @@ export function AdminLoginForm() {
             setUsername(event.target.value);
             setErrors((current) => ({ ...current, username: undefined, submit: undefined }));
           }}
-          className="mt-2 w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-500"
+          className="form-control mt-2"
           placeholder="请输入用户名"
           autoComplete="username"
         />
@@ -85,7 +86,7 @@ export function AdminLoginForm() {
             setPassword(event.target.value);
             setErrors((current) => ({ ...current, password: undefined, submit: undefined }));
           }}
-          className="mt-2 w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-500"
+          className="form-control mt-2"
           placeholder="请输入密码"
           autoComplete="current-password"
         />
@@ -98,8 +99,9 @@ export function AdminLoginForm() {
         type="submit"
         disabled={isSubmitting}
         aria-label="登录"
-        className="w-full rounded-md bg-blue-700 px-4 py-3 text-sm font-semibold text-white hover:bg-blue-800 disabled:cursor-not-allowed disabled:bg-slate-300"
+        className="inline-flex w-full items-center justify-center gap-2 rounded-md bg-blue-600 px-4 py-3 text-sm font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-slate-300"
       >
+        <LogIn className="h-4 w-4" />
         {isSubmitting ? "登录中..." : "登录"}
       </button>
     </form>

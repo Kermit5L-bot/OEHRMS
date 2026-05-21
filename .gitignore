@@ -10,3 +10,8 @@ build
 *.db
 *.db-journal
 .codex-ssh/
+public/uploads/*
+!public/uploads/.gitkeep
+!public/uploads/showrooms/
+public/uploads/showrooms/*
+!public/uploads/showrooms/.gitkeep

@@ -50,12 +50,8 @@ export function AdminLeadNoteForm({ leadId, initialFollowUpNote }: AdminLeadNote
       <div className="space-y-2">
         <p className="max-w-xs whitespace-pre-wrap text-sm text-slate-600">{followUpNote || "暂无跟进备注"}</p>
         {message ? <p className="text-xs text-emerald-700">{message}</p> : null}
-        <button
-          type="button"
-          onClick={() => setIsEditing(true)}
-          className="text-sm font-semibold text-blue-700 hover:text-blue-900"
-        >
-          编辑跟进备注
+        <button type="button" onClick={() => setIsEditing(true)} className="text-sm font-semibold text-blue-700 hover:text-blue-900">
+          编辑备注
         </button>
       </div>
     );
@@ -63,20 +59,10 @@ export function AdminLeadNoteForm({ leadId, initialFollowUpNote }: AdminLeadNote
 
   return (
     <div className="space-y-2">
-      <textarea
-        value={followUpNote}
-        onChange={(event) => setFollowUpNote(event.target.value)}
-        className="min-h-24 w-64 rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-500"
-        placeholder="填写跟进备注"
-      />
+      <textarea value={followUpNote} onChange={(event) => setFollowUpNote(event.target.value)} className="form-control min-h-24 w-72" placeholder="填写跟进备注" />
       {message ? <p className="text-xs text-red-600">{message}</p> : null}
       <div className="flex gap-2">
-        <button
-          type="button"
-          onClick={handleSave}
-          disabled={isSaving}
-          className="rounded-md bg-slate-900 px-3 py-2 text-xs font-semibold text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-300"
-        >
+        <button type="button" onClick={handleSave} disabled={isSaving} className="rounded-md bg-blue-600 px-3 py-2 text-xs font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-slate-300">
           {isSaving ? "保存中..." : "保存"}
         </button>
         <button

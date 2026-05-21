@@ -4,7 +4,10 @@ import {
   formatDateForAppointmentNo,
   getTodayDateString,
   isValidVisitTimeSlot,
+  isValidCustomerType,
+  isValidSolutionConsulting,
   maskPhone,
+  normalizeInterestAreas,
   phonePattern,
 } from "@/lib/appointments";
 import { prisma } from "@/lib/prisma";
@@ -19,6 +22,9 @@ type AppointmentPayload = {
   companyName?: unknown;
   position?: unknown;
   industry?: unknown;
+  customerType?: unknown;
+  interestAreas?: unknown;
+  needSolutionConsulting?: unknown;
   visitPurpose?: unknown;
   needGuide?: unknown;
   customerRemark?: unknown;
@@ -79,6 +85,11 @@ export async function POST(request: Request) {
   const companyName = trimRequired(payload.companyName);
   const position = trimOptional(payload.position);
   const industry = trimOptional(payload.industry);
+  const customerType = isValidCustomerType(payload.customerType) ? payload.customerType : null;
+  const interestAreas = normalizeInterestAreas(payload.interestAreas);
+  const needSolutionConsulting = isValidSolutionConsulting(payload.needSolutionConsulting)
+    ? payload.needSolutionConsulting
+    : null;
   const visitPurpose = trimOptional(payload.visitPurpose);
   const customerRemark = trimOptional(payload.customerRemark);
   const needGuide = typeof payload.needGuide === "boolean" ? payload.needGuide : true;
@@ -138,6 +149,9 @@ export async function POST(request: Request) {
           companyName,
           position,
           industry,
+          customerType,
+          interestAreas,
+          needSolutionConsulting,
           visitPurpose,
           needGuide,
           customerRemark,
@@ -153,6 +167,9 @@ export async function POST(request: Request) {
             companyName,
             position,
             industry,
+            customerType,
+            interestAreas,
+            needSolutionConsulting,
             latestShowroomId: showroomId,
             latestAppointmentId: appointment.id,
             appointmentCount: {
@@ -168,6 +185,9 @@ export async function POST(request: Request) {
             companyName,
             position,
             industry,
+            customerType,
+            interestAreas,
+            needSolutionConsulting,
             latestShowroomId: showroomId,
             latestAppointmentId: appointment.id,
             appointmentCount: 1,

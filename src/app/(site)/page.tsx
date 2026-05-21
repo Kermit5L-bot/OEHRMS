@@ -1,10 +1,39 @@
 import Link from "next/link";
+import {
+  BadgeCheck,
+  Building2,
+  CalendarCheck,
+  ClipboardPenLine,
+  Flag,
+  Handshake,
+  Map,
+  MapPin,
+  Sparkles,
+  Star,
+} from "lucide-react";
 import { ShowroomCard } from "@/components/showroom-card";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
 
-const steps = ["选择展厅", "填写预约信息", "市场部审批确认", "到访参观接待"];
+const steps = [
+  { label: "选择展厅", icon: Building2 },
+  { label: "填写预约信息", icon: ClipboardPenLine },
+  { label: "等待确认", icon: BadgeCheck },
+  { label: "到访参观", icon: Flag },
+];
+const cityNodes = [
+  { name: "北京", image: "/beijing.jpg" },
+  { name: "陕西西安", image: "/xian.jpg" },
+  { name: "安徽阜阳", image: "/fuyang.jpg" },
+  { name: "新疆伊犁州", image: "/yili.jpg" },
+];
+const productSignals = [
+  { label: "线上展厅总览", icon: Map },
+  { label: "便捷预约参观", icon: CalendarCheck },
+  { label: "展厅亮点浏览", icon: Star },
+  { label: "专属接待服务", icon: Handshake },
+];
 
 export default async function HomePage() {
   const showrooms = await prisma.showroom.findMany({
@@ -12,56 +41,117 @@ export default async function HomePage() {
   });
 
   return (
-    <div>
-      <section className="bg-white">
-        <div className="mx-auto grid max-w-6xl gap-10 px-4 py-14 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
-          <div>
-            <p className="text-sm font-semibold text-blue-700">统一入口 · 在线预约 · 接待协同</p>
-            <h1 className="mt-4 text-4xl font-bold leading-tight text-slate-950 sm:text-5xl">
-              在线展厅预约
-            </h1>
-            <p className="mt-5 max-w-2xl text-base leading-7 text-slate-600">
-              了解公司展厅与实训基地，在线选择展厅并提交参观预约。市场部后续可统一审核、备注和安排接待。
-            </p>
-            <div className="mt-8 flex flex-wrap gap-3">
-              <Link
-                href="/appointment"
-                className="rounded-md bg-blue-700 px-5 py-3 text-sm font-semibold text-white hover:bg-blue-800"
-              >
-                立即预约
-              </Link>
-              <Link
-                href="/showrooms"
-                className="rounded-md border border-slate-300 px-5 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50"
-              >
-                查看展厅
-              </Link>
+    <div className="tech-grid">
+      <section className="relative mx-auto grid max-w-6xl gap-10 px-4 py-12 sm:py-16 lg:grid-cols-[1.08fr_0.92fr] lg:items-center">
+        <div className="relative z-10">
+          <p className="inline-flex items-center gap-2.5 rounded-full border border-cyan-300/25 bg-cyan-300/12 px-5 py-2.5 text-base font-semibold tracking-wide text-cyan-100 shadow-lg shadow-cyan-950/20">
+            <Sparkles className="h-5 w-5" />
+            智慧预约&nbsp;&nbsp;·&nbsp;&nbsp;智享展厅
+          </p>
+          <h1 className="mt-5 max-w-3xl bg-gradient-to-r from-white via-cyan-200 to-blue-400 bg-clip-text text-4xl font-bold leading-tight text-transparent sm:text-5xl">
+            万维盈创智慧展厅预约
+          </h1>
+          <p className="mt-5 max-w-2xl text-base leading-7 text-slate-300 sm:text-lg">
+            面向客户接待、展厅参观、实训基地交流的一站式数字化平台
+          </p>
+          <div className="mt-8 grid gap-3 sm:flex sm:flex-wrap">
+            <Link
+              href="/appointment"
+              className="min-h-12 rounded-md bg-blue-600 px-6 py-3 text-center text-sm font-semibold text-white shadow-xl shadow-blue-950/40 hover:bg-blue-500"
+            >
+              预约参观
+            </Link>
+            <Link
+              href="/showrooms"
+              className="min-h-12 rounded-md border border-cyan-300/35 px-6 py-3 text-center text-sm font-semibold text-cyan-100 hover:bg-cyan-300/10"
+            >
+              查看展厅
+            </Link>
+          </div>
+          <div className="mt-8 grid gap-3 sm:grid-cols-2">
+            {productSignals.map((item) => {
+              const SignalIcon = item.icon;
+              return (
+              <div key={item.label} className="inline-flex items-center gap-2 rounded-md border border-cyan-300/18 bg-slate-950/35 px-4 py-3 text-sm font-semibold text-slate-100">
+                <SignalIcon className="h-4 w-4 text-cyan-200" />
+                {item.label}
+              </div>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="glass-panel relative z-10 overflow-hidden rounded-lg p-5 sm:p-6">
+          <div className="relative z-10 flex items-center justify-between gap-4">
+            <div>
+              <p className="text-sm font-semibold text-cyan-200">智慧预约流程</p>
+              <h2 className="mt-2 text-xl font-bold text-white">从线上申请到现场接待</h2>
             </div>
           </div>
+          <div className="relative z-10 mt-6 grid gap-3">
+            {steps.map((step, index) => {
+              const StepIcon = step.icon;
 
-          <div className="rounded-lg border border-slate-200 bg-slate-950 p-6 text-white shadow-sm">
-            <p className="text-sm text-blue-200">预约流程</p>
-            <div className="mt-5 grid gap-3">
-              {steps.map((step, index) => (
-                <div key={step} className="flex items-center gap-3 rounded-md bg-white/10 p-4">
-                  <span className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-500 text-sm font-bold">
-                    {index + 1}
-                  </span>
-                  <span className="font-medium">{step}</span>
-                </div>
-              ))}
-            </div>
+              return (
+              <div
+                key={step.label}
+                className="relative flex min-h-20 items-center gap-3 overflow-hidden rounded-md border border-cyan-300/22 bg-white/[0.045] p-4 pr-28 shadow-lg shadow-cyan-950/10 backdrop-blur-md before:absolute before:inset-x-0 before:top-0 before:h-px before:bg-white/20"
+              >
+                <StepIcon className="pointer-events-none absolute -bottom-3 -right-2 h-16 w-16 stroke-[1.25] text-cyan-100/5 sm:h-20 sm:w-20" />
+                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-cyan-200/20 bg-cyan-200/12 text-[18px] font-bold text-cyan-100 shadow-inner shadow-cyan-200/10">
+                  {String(index + 1).padStart(2, "0")}
+                </span>
+                <span>
+                  <span className="block text-xs font-semibold text-cyan-200">STEP {index + 1}</span>
+                  <span className="font-semibold text-slate-100">{step.label}</span>
+                </span>
+              </div>
+              );
+            })}
           </div>
         </div>
       </section>
 
-      <section className="mx-auto max-w-6xl px-4 py-12">
+      <section className="relative mx-auto max-w-6xl px-4 pb-12">
+        <div className="glass-panel rounded-lg p-5 sm:p-6">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <p className="text-sm font-semibold text-cyan-200">展厅分布区域</p>
+              <h2 className="mt-2 text-2xl font-bold text-white">多地展厅统一预约入口</h2>
+            </div>
+            <Link href="/showrooms" className="text-sm font-semibold text-cyan-200 hover:text-cyan-100">
+              查看全部展厅
+            </Link>
+          </div>
+          <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            {cityNodes.map((city, index) => (
+              <div
+                key={city.name}
+                className="group relative min-h-28 overflow-hidden rounded-md border border-blue-900/70 bg-slate-950/36 p-4 shadow-lg shadow-blue-950/20"
+                style={{ backgroundImage: `url(${city.image})`, backgroundPosition: "center", backgroundSize: "cover" }}
+              >
+                <div className="absolute inset-0 bg-slate-950/58 transition-colors group-hover:bg-slate-950/46" />
+                <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/18 via-slate-950/18 to-blue-950/48" />
+                <div className="relative z-10">
+                  <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-cyan-100 drop-shadow">
+                    <MapPin className="h-3.5 w-3.5" />
+                    NODE 0{index + 1}
+                  </span>
+                  <p className="mt-8 text-xl font-bold text-white drop-shadow">{city.name}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="relative mx-auto max-w-6xl px-4 pb-16">
         <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
           <div>
-            <p className="text-sm font-semibold text-blue-700">展厅概览</p>
-            <h2 className="mt-2 text-3xl font-bold text-slate-950">选择适合的参观展厅</h2>
+            <p className="text-sm font-semibold text-cyan-200">展厅概览</p>
+            <h2 className="mt-2 text-3xl font-bold text-white">选择适合的参观展厅</h2>
           </div>
-          <Link href="/showrooms" className="text-sm font-semibold text-blue-700 hover:text-blue-900">
+          <Link href="/showrooms" className="text-sm font-semibold text-cyan-200 hover:text-cyan-100">
             查看全部展厅
           </Link>
         </div>
@@ -73,7 +163,7 @@ export default async function HomePage() {
             ))}
           </div>
         ) : (
-          <div className="mt-7 rounded-lg border border-dashed border-slate-300 bg-white p-8 text-center text-slate-600">
+          <div className="glass-panel mt-7 rounded-lg p-8 text-center text-slate-300">
             暂无展厅数据，请先运行数据库 seed。
           </div>
         )}

@@ -24,15 +24,14 @@ export function getShowroomStatusLabel(status: ShowroomSummary["status"]) {
   return status === "open" ? "开放预约" : "暂停预约";
 }
 
-export function getShowroomCoverStyle(showroom: ShowroomSummary) {
-  if (showroom.coverImage) {
-    return {
-      backgroundImage: `url(${showroom.coverImage})`,
-    };
+export function normalizeShowroomCoverSrc(coverImage?: string | null) {
+  if (!coverImage) return "";
+
+  const normalized = coverImage.replaceAll("\\", "/");
+  const publicIndex = normalized.lastIndexOf("/public/");
+  if (publicIndex >= 0) {
+    return normalized.slice(publicIndex + "/public".length);
   }
 
-  return {
-    backgroundImage:
-      "linear-gradient(135deg, rgba(14, 116, 144, 0.9), rgba(37, 99, 235, 0.85)), linear-gradient(45deg, #e2e8f0, #f8fafc)",
-  };
+  return coverImage;
 }

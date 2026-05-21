@@ -14,6 +14,12 @@ function trimOptional(value: unknown) {
   return trimmed.length > 0 ? trimmed : null;
 }
 
+function getOptionalDateTime(value: unknown) {
+  if (typeof value !== "string" || !value.trim()) return null;
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
 export async function POST(request: Request, { params }: RouteContext) {
   const currentUser = await getCurrentAdminUser();
   if (!currentUser) {
@@ -45,6 +51,23 @@ export async function POST(request: Request, { params }: RouteContext) {
       receptionist: trimOptional(payload.receptionist),
       receptionNote: trimOptional(payload.receptionNote),
       followUpNote: trimOptional(payload.followUpNote),
+      applicantName: trimOptional(payload.applicantName),
+      internalContactInfo: trimOptional(payload.internalContactInfo),
+      customerLevel: trimOptional(payload.customerLevel),
+      mainVisitorInfo: trimOptional(payload.mainVisitorInfo),
+      visitStartTime: getOptionalDateTime(payload.visitStartTime),
+      visitEndTime: getOptionalDateTime(payload.visitEndTime),
+      actualReceptionLocation: trimOptional(payload.actualReceptionLocation),
+      needVehicle: trimOptional(payload.needVehicle),
+      vehicleRequirement: trimOptional(payload.vehicleRequirement),
+      needAccommodation: trimOptional(payload.needAccommodation),
+      accommodationRequirement: trimOptional(payload.accommodationRequirement),
+      needDining: trimOptional(payload.needDining),
+      diningRequirement: trimOptional(payload.diningRequirement),
+      giftPreparation: trimOptional(payload.giftPreparation),
+      giftRequirement: trimOptional(payload.giftRequirement),
+      receptionScheduleNote: trimOptional(payload.receptionScheduleNote),
+      receptionPreparationNote: trimOptional(payload.receptionPreparationNote),
     },
   });
 

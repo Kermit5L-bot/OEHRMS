@@ -16,19 +16,17 @@ export default async function AdminDashboardLayout({
   }
 
   return (
-    <div className="flex min-h-screen bg-slate-100">
+    <div className="min-h-screen bg-slate-100 lg:flex">
       <AdminSidebar />
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="flex items-center justify-between border-b border-slate-200 bg-white px-8 py-4">
+        <header className="sticky top-0 z-40 flex items-center justify-between border-b border-slate-200 bg-white/95 px-4 py-3 shadow-sm backdrop-blur lg:px-8">
           <div>
-            <p className="text-xs font-medium uppercase tracking-wide text-slate-500">当前用户</p>
-            <p className="mt-1 text-sm font-semibold text-slate-950">
-              {currentUser.realName || currentUser.username}
-            </p>
+            <p className="text-xs font-semibold uppercase tracking-wide text-blue-600">当前登录用户</p>
+            <p className="mt-1 text-sm font-semibold text-slate-950">{currentUser.realName || currentUser.username}</p>
           </div>
           <AdminLogoutButton />
         </header>
-        <main className="flex-1 p-8">{children}</main>
+        <main className="relative flex-1 p-4 sm:p-6 lg:p-8">{children}</main>
       </div>
     </div>
   );

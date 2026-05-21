@@ -1,6 +1,7 @@
 import { AdminShowroomEditForm } from "@/components/admin-showroom-edit-form";
 import { getShowroomStatusLabel, getShowroomTypeLabel } from "@/lib/showrooms";
 import { prisma } from "@/lib/prisma";
+import { CircleCheck, Clock3, PauseCircle, Tag } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -23,15 +24,14 @@ export default async function AdminShowroomsPage() {
     <section>
       <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="text-sm font-medium text-blue-700">后台管理</p>
-          <h1 className="mt-2 text-3xl font-bold text-slate-950">展厅管理</h1>
+          <h1 className="text-3xl font-bold text-slate-950">展厅管理</h1>
           <p className="mt-3 text-sm text-slate-600">
             维护四个固定展厅的基础信息、展示内容、开放状态和排序。本阶段不支持新增或删除展厅。
           </p>
         </div>
       </div>
 
-      <div className="mt-8 overflow-hidden rounded-lg bg-white shadow-sm">
+      <div className="admin-panel mt-8 overflow-hidden rounded-lg">
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-slate-200 text-left text-sm">
             <thead className="bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-500">
@@ -47,35 +47,32 @@ export default async function AdminShowroomsPage() {
             </thead>
             <tbody className="divide-y divide-slate-100">
               {showrooms.map((showroom) => (
-                <tr key={showroom.id} className="align-top">
+                <tr key={showroom.id} className="align-top hover:bg-slate-50">
                   <td className="min-w-48 px-4 py-4">
                     <p className="font-semibold text-slate-950">{showroom.name}</p>
-                    <p className="mt-1 line-clamp-2 max-w-md text-xs leading-5 text-slate-500">
-                      {showroom.summary}
-                    </p>
+                    <p className="mt-1 line-clamp-2 max-w-md text-xs leading-5 text-slate-500">{showroom.summary}</p>
                   </td>
                   <td className="whitespace-nowrap px-4 py-4 text-slate-600">{showroom.city}</td>
                   <td className="whitespace-nowrap px-4 py-4 text-slate-600">
-                    {getShowroomTypeLabel(showroom.type)}
+                    <span className="inline-flex items-center gap-1.5">
+                      <Tag className="h-4 w-4 text-blue-600" />
+                      {getShowroomTypeLabel(showroom.type)}
+                    </span>
                   </td>
                   <td className="whitespace-nowrap px-4 py-4">
-                    <span
-                      className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ${
-                        showroom.status === "open"
-                          ? "bg-emerald-50 text-emerald-700 ring-emerald-100"
-                          : "bg-slate-100 text-slate-600 ring-slate-200"
-                      }`}
-                    >
+                    <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ${showroom.status === "open" ? "bg-emerald-50 text-emerald-700 ring-emerald-100" : "bg-slate-100 text-slate-600 ring-slate-200"}`}>
+                      {showroom.status === "open" ? <CircleCheck className="mr-1.5 h-3.5 w-3.5" /> : <PauseCircle className="mr-1.5 h-3.5 w-3.5" />}
                       {getShowroomStatusLabel(showroom.status)}
                     </span>
                   </td>
                   <td className="whitespace-nowrap px-4 py-4 text-slate-600">{showroom.sortOrder}</td>
                   <td className="whitespace-nowrap px-4 py-4 text-slate-600">
-                    {formatDateTime(showroom.updatedAt)}
+                    <span className="inline-flex items-center gap-1.5">
+                      <Clock3 className="h-4 w-4 text-slate-400" />
+                      {formatDateTime(showroom.updatedAt)}
+                    </span>
                   </td>
-                  <td className="px-4 py-4">
-                    <AdminShowroomEditForm showroom={showroom} />
-                  </td>
+                  <td className="px-4 py-4"><AdminShowroomEditForm showroom={showroom} /></td>
                 </tr>
               ))}
 
@@ -83,9 +80,7 @@ export default async function AdminShowroomsPage() {
                 <tr>
                   <td colSpan={7} className="px-4 py-10 text-center">
                     <h2 className="text-base font-semibold text-slate-950">暂无展厅数据</h2>
-                    <p className="mt-2 text-sm text-slate-600">
-                      请先运行数据库 seed 初始化四个展厅，再刷新当前页面。
-                    </p>
+                    <p className="mt-2 text-sm text-slate-600">请先运行数据库 seed 初始化四个展厅，再刷新当前页面。</p>
                   </td>
                 </tr>
               ) : null}
