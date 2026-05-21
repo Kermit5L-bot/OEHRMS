@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
-import { Prisma, type ShowroomStatus, type ShowroomType } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { getCurrentAdminUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { isShowroomStatus, type ShowroomStatusValue } from "@/lib/showrooms";
 
 type RouteContext = {
   params: Promise<{
@@ -34,12 +35,54 @@ function trimOptional(value: unknown) {
   return trimmed.length > 0 ? trimmed : null;
 }
 
-function isShowroomType(value: unknown): value is ShowroomType {
+function isShowroomType(value: unknown): value is "company" | "training_base" {
   return value === "company" || value === "training_base";
 }
 
-function isShowroomStatus(value: unknown): value is ShowroomStatus {
-  return value === "open" || value === "closed";
+function parseSortOrder(value: unknown) {
+  if (value === null || value === undefined || value === "") return 0;
+  const sortOrder = Number(value);
+  return Number.isInteger(sortOrder) ? sortOrder : null;
+}
+
+function parseShowroomPayload(payload: ShowroomPayload) {
+  const name = trimRequired(payload.name);
+  const city = trimRequired(payload.city);
+  const type = payload.type;
+  const summary = trimRequired(payload.summary);
+  const status = payload.status;
+  const sortOrder = parseSortOrder(payload.sortOrder);
+
+  if (!name) return { error: "请填写展厅名称" };
+  if (!city) return { error: "请填写展厅地点" };
+  if (!isShowroomType(type)) return { error: "请选择正确的展厅类型" };
+  if (!summary) return { error: "请填写展厅简介" };
+  if (!isShowroomStatus(status)) return { error: "请选择正确的展厅状态" };
+  if (sortOrder === null) return { error: "排序值必须是整数" };
+
+  return {
+    data: {
+      name,
+      city,
+      type,
+      coverImage: trimOptional(payload.coverImage),
+      summary,
+      description: trimOptional(payload.description),
+      openingHours: trimOptional(payload.openingHours),
+      suggestedDuration: trimOptional(payload.suggestedDuration),
+      address: trimOptional(payload.address),
+      status: status as ShowroomStatusValue,
+      sortOrder,
+    },
+  };
+}
+
+function revalidateShowroomPaths(showroomId?: number) {
+  revalidatePath("/");
+  revalidatePath("/showrooms");
+  if (showroomId) revalidatePath(`/showrooms/${showroomId}`);
+  revalidatePath("/admin/showrooms");
+  revalidatePath("/admin/dashboard");
 }
 
 export async function PUT(request: Request, context: RouteContext) {
@@ -61,60 +104,18 @@ export async function PUT(request: Request, context: RouteContext) {
     return NextResponse.json({ error: "请求参数格式不正确" }, { status: 400 });
   }
 
-  const name = trimRequired(payload.name);
-  const city = trimRequired(payload.city);
-  const type = payload.type;
-  const coverImage = trimOptional(payload.coverImage);
-  const summary = trimRequired(payload.summary);
-  const description = trimOptional(payload.description);
-  const openingHours = trimOptional(payload.openingHours);
-  const suggestedDuration = trimOptional(payload.suggestedDuration);
-  const address = trimOptional(payload.address);
-  const status = payload.status;
-  const sortOrder = payload.sortOrder === null || payload.sortOrder === "" ? 0 : Number(payload.sortOrder);
-
-  if (!name) {
-    return NextResponse.json({ error: "请填写展厅名称" }, { status: 400 });
-  }
-  if (!city) {
-    return NextResponse.json({ error: "请填写展厅地点" }, { status: 400 });
-  }
-  if (!isShowroomType(type)) {
-    return NextResponse.json({ error: "请选择正确的展厅类型" }, { status: 400 });
-  }
-  if (!summary) {
-    return NextResponse.json({ error: "请填写展厅简介" }, { status: 400 });
-  }
-  if (!isShowroomStatus(status)) {
-    return NextResponse.json({ error: "请选择正确的开放状态" }, { status: 400 });
-  }
-  if (!Number.isInteger(sortOrder)) {
-    return NextResponse.json({ error: "排序值必须是整数" }, { status: 400 });
+  const parsed = parseShowroomPayload(payload);
+  if ("error" in parsed) {
+    return NextResponse.json({ error: parsed.error }, { status: 400 });
   }
 
   try {
     const showroom = await prisma.showroom.update({
       where: { id: showroomId },
-      data: {
-        name,
-        city,
-        type,
-        coverImage,
-        summary,
-        description,
-        openingHours,
-        suggestedDuration,
-        address,
-        status,
-        sortOrder,
-      },
+      data: parsed.data as Prisma.ShowroomUpdateInput,
     });
 
-    revalidatePath("/");
-    revalidatePath("/showrooms");
-    revalidatePath(`/showrooms/${showroom.id}`);
-    revalidatePath("/admin/showrooms");
-
+    revalidateShowroomPaths(showroom.id);
     return NextResponse.json({ showroom });
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {

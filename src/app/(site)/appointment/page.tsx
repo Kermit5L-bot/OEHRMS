@@ -12,8 +12,13 @@ type AppointmentPageProps = {
 
 export default async function AppointmentPage({ searchParams }: AppointmentPageProps) {
   const { showroomId } = await searchParams;
-  const initialShowroomId = showroomId ? Number(showroomId) : undefined;
+  const requestedShowroomId = showroomId ? Number(showroomId) : undefined;
   const showrooms = await prisma.showroom.findMany({
+    where: {
+      status: {
+        in: ["open", "closed"],
+      },
+    },
     orderBy: { sortOrder: "asc" },
     select: {
       id: true,
@@ -21,6 +26,10 @@ export default async function AppointmentPage({ searchParams }: AppointmentPageP
       status: true,
     },
   });
+  const initialShowroomId =
+    Number.isInteger(requestedShowroomId) && showrooms.some((showroom) => showroom.id === requestedShowroomId)
+      ? requestedShowroomId
+      : undefined;
 
   return (
     <div className="tech-grid min-h-[calc(100vh-73px)]">
@@ -54,7 +63,7 @@ export default async function AppointmentPage({ searchParams }: AppointmentPageP
         <div className="mt-8">
           <AppointmentForm
             showrooms={showrooms}
-            initialShowroomId={Number.isInteger(initialShowroomId) ? initialShowroomId : undefined}
+            initialShowroomId={initialShowroomId}
           />
         </div>
       </div>

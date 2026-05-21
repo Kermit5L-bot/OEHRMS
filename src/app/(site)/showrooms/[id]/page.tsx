@@ -30,6 +30,9 @@ export default async function ShowroomDetailPage({ params }: ShowroomDetailPageP
   if (!showroom) {
     return <ShowroomNotFound />;
   }
+  if (showroom.status !== "open" && showroom.status !== "closed") {
+    return <ShowroomNotFound />;
+  }
 
   const isOpen = showroom.status === "open";
   const coverSrc = normalizeShowroomCoverSrc(showroom.coverImage);

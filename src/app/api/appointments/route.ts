@@ -128,7 +128,7 @@ export async function POST(request: Request) {
       if (!showroom) {
         throw new Error("SHOWROOM_NOT_FOUND");
       }
-      if (showroom.status === "closed") {
+      if (showroom.status !== "open") {
         throw new Error("SHOWROOM_CLOSED");
       }
 

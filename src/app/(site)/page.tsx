@@ -6,10 +6,11 @@ import {
   ClipboardPenLine,
   Flag,
   Handshake,
-  Map,
   MapPin,
+  Search,
+  Send,
+  ShieldCheck,
   Sparkles,
-  Star,
 } from "lucide-react";
 import { ShowroomCard } from "@/components/showroom-card";
 import { prisma } from "@/lib/prisma";
@@ -29,14 +30,18 @@ const cityNodes = [
   { name: "新疆伊犁州", image: "/yili.jpg" },
 ];
 const productSignals = [
-  { label: "线上展厅总览", icon: Map },
   { label: "便捷预约参观", icon: CalendarCheck },
-  { label: "展厅亮点浏览", icon: Star },
+  { label: "高效审核确认", icon: ShieldCheck },
   { label: "专属接待服务", icon: Handshake },
 ];
 
 export default async function HomePage() {
   const showrooms = await prisma.showroom.findMany({
+    where: {
+      status: {
+        in: ["open", "closed"],
+      },
+    },
     orderBy: { sortOrder: "asc" },
   });
 
@@ -51,28 +56,30 @@ export default async function HomePage() {
           <h1 className="mt-5 max-w-3xl bg-gradient-to-r from-white via-cyan-200 to-blue-400 bg-clip-text text-4xl font-bold leading-tight text-transparent sm:text-5xl">
             万维盈创智慧展厅预约
           </h1>
-          <p className="mt-5 max-w-2xl text-base leading-7 text-slate-300 sm:text-lg">
+          <p className="mt-4 max-w-2xl text-base leading-7 text-slate-300 sm:text-lg">
             面向客户接待、展厅参观、实训基地交流的一站式数字化平台
           </p>
-          <div className="mt-8 grid gap-3 sm:flex sm:flex-wrap">
+          <div className="mt-6 grid max-w-[470px] gap-3 sm:grid-cols-2">
             <Link
               href="/appointment"
-              className="min-h-12 rounded-md bg-blue-600 px-6 py-3 text-center text-sm font-semibold text-white shadow-xl shadow-blue-950/40 hover:bg-blue-500"
+              className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-md bg-blue-600 px-8 py-3 text-center text-sm font-semibold text-white shadow-xl shadow-blue-950/40 hover:bg-blue-500"
             >
+              <Send className="h-4.5 w-4.5" />
               预约参观
             </Link>
             <Link
               href="/showrooms"
-              className="min-h-12 rounded-md border border-cyan-300/35 px-6 py-3 text-center text-sm font-semibold text-cyan-100 hover:bg-cyan-300/10"
+              className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-md border border-cyan-300/35 px-8 py-3 text-center text-sm font-semibold text-cyan-100 hover:bg-cyan-300/10"
             >
+              <Search className="h-4.5 w-4.5" />
               查看展厅
             </Link>
           </div>
-          <div className="mt-8 grid gap-3 sm:grid-cols-2">
+          <div className="mt-6 flex max-w-[470px] flex-wrap items-center gap-x-6 gap-y-3">
             {productSignals.map((item) => {
               const SignalIcon = item.icon;
               return (
-              <div key={item.label} className="inline-flex items-center gap-2 rounded-md border border-cyan-300/18 bg-slate-950/35 px-4 py-3 text-sm font-semibold text-slate-100">
+              <div key={item.label} className="inline-flex items-center gap-2 border-r border-cyan-300/25 pr-6 text-sm font-semibold text-slate-100 last:border-r-0 last:pr-0">
                 <SignalIcon className="h-4 w-4 text-cyan-200" />
                 {item.label}
               </div>
@@ -81,29 +88,29 @@ export default async function HomePage() {
           </div>
         </div>
 
-        <div className="glass-panel relative z-10 overflow-hidden rounded-lg p-5 sm:p-6">
+        <div className="glass-panel relative z-10 overflow-hidden rounded-lg p-4 sm:p-5">
           <div className="relative z-10 flex items-center justify-between gap-4">
             <div>
               <p className="text-sm font-semibold text-cyan-200">智慧预约流程</p>
               <h2 className="mt-2 text-xl font-bold text-white">从线上申请到现场接待</h2>
             </div>
           </div>
-          <div className="relative z-10 mt-6 grid gap-3">
+          <div className="relative z-10 mt-4 grid gap-2.5">
             {steps.map((step, index) => {
               const StepIcon = step.icon;
 
               return (
               <div
                 key={step.label}
-                className="relative flex min-h-20 items-center gap-3 overflow-hidden rounded-md border border-cyan-300/22 bg-white/[0.045] p-4 pr-28 shadow-lg shadow-cyan-950/10 backdrop-blur-md before:absolute before:inset-x-0 before:top-0 before:h-px before:bg-white/20"
+                className="relative flex min-h-16 items-center gap-3 overflow-hidden rounded-md border border-cyan-300/22 bg-white/[0.045] p-3 pr-24 shadow-lg shadow-cyan-950/10 backdrop-blur-md before:absolute before:inset-x-0 before:top-0 before:h-px before:bg-white/20"
               >
-                <StepIcon className="pointer-events-none absolute -bottom-3 -right-2 h-16 w-16 stroke-[1.25] text-cyan-100/5 sm:h-20 sm:w-20" />
-                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-cyan-200/20 bg-cyan-200/12 text-[18px] font-bold text-cyan-100 shadow-inner shadow-cyan-200/10">
+                <StepIcon className="pointer-events-none absolute -bottom-3 -right-2 h-14 w-14 stroke-[1.25] text-cyan-100/5 sm:h-16 sm:w-16" />
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-cyan-200/20 bg-cyan-200/12 text-base font-bold text-cyan-100 shadow-inner shadow-cyan-200/10">
                   {String(index + 1).padStart(2, "0")}
                 </span>
                 <span>
-                  <span className="block text-xs font-semibold text-cyan-200">STEP {index + 1}</span>
-                  <span className="font-semibold text-slate-100">{step.label}</span>
+                  <span className="block text-[11px] font-semibold text-cyan-200">STEP {index + 1}</span>
+                  <span className="text-sm font-semibold text-slate-100 sm:text-base">{step.label}</span>
                 </span>
               </div>
               );

@@ -25,6 +25,8 @@ enum ShowroomType {
 enum ShowroomStatus {
   open
   closed
+  hidden
+  deleted
 }
 
 enum VisitTimeSlot {

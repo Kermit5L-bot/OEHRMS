@@ -10,11 +10,12 @@ import {
   phonePattern,
   solutionConsultingOptions,
 } from "@/lib/appointments";
+import type { ShowroomStatusValue } from "@/lib/showrooms";
 
 type ShowroomOption = {
   id: number;
   name: string;
-  status: "open" | "closed";
+  status: ShowroomStatusValue;
 };
 
 type AppointmentFormProps = {
@@ -179,9 +180,9 @@ export function AppointmentForm({ showrooms, initialShowroomId }: AppointmentFor
           <select value={form.showroomId} onChange={(event) => updateField("showroomId", event.target.value)} className="form-control">
             <option value="">请选择展厅</option>
             {showrooms.map((showroom) => (
-              <option key={showroom.id} value={showroom.id} disabled={showroom.status === "closed"}>
+              <option key={showroom.id} value={showroom.id} disabled={showroom.status !== "open"}>
                 {showroom.name}
-                {showroom.status === "closed" ? "（暂停预约）" : ""}
+                {showroom.status !== "open" ? "（暂停预约）" : ""}
               </option>
             ))}
           </select>

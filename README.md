@@ -1,153 +1,176 @@
-# 在线展厅预约管理系统
+# 在线展厅预约管理系统（OEHRMS）
 
-本项目基于《在线展厅预约管理系统 PRD》开发，技术栈为 Next.js、TypeScript、Tailwind CSS、Prisma 和 App Router。
+本项目是一个基于 Next.js App Router 的在线展厅预约管理系统，覆盖“用户预约 + 后台审核 + 线索管理 + 展厅管理 + 经营看板”主流程。
 
-当前已完成：
+技术栈：
+- Next.js 16（App Router）
+- React 19
+- TypeScript
+- Tailwind CSS 4
+- Prisma 6 + SQLite
 
-- 阶段 1：项目初始化、基础路由、用户端导航、后台侧边栏和静态占位页面。
-- 阶段 2：Prisma 数据模型和初始 seed 数据。
+---
 
-尚未实现页面业务功能、登录逻辑、预约提交、后台审批、留资管理交互或展厅编辑逻辑。
+## 一、当前实现范围（基于代码现状）
 
-## 启动项目
+### 1) 用户端
+- 首页：`/`
+- 展厅列表：`/showrooms`
+- 展厅详情：`/showrooms/[id]`
+- 在线预约：`/appointment`
+- 预约成功页：`/appointment/success`
 
-1. 安装依赖：
+### 2) 管理后台
+- 后台登录：`/admin/login`
+- 后台入口：`/admin`（进入仪表盘）
+- 经营看板：`/admin/dashboard`
+- 预约管理：`/admin/appointments`
+- 预约详情：`/admin/appointments/[id]`
+- 线索管理：`/admin/leads`
+- 展厅管理：`/admin/showrooms`
 
+### 3) 主要后台 API（已存在）
+- 用户预约提交：`POST /api/appointments`
+- 后台登录：`POST /api/admin/login`
+- 后台登出：`POST /api/admin/logout`
+- 后台预约列表：`GET /api/admin/appointments`
+- 预约详情更新：`PATCH /api/admin/appointments/[id]`
+- 审批动作：
+  - `POST /api/admin/appointments/[id]/approve`
+  - `POST /api/admin/appointments/[id]/reject`
+  - `POST /api/admin/appointments/[id]/complete`
+  - `POST /api/admin/appointments/[id]/reception-note`
+- 线索列表：`GET /api/admin/leads`
+- 线索跟进备注：`PATCH /api/admin/leads/[id]/follow-up-note`
+- 展厅管理：
+  - `GET /api/admin/showrooms`
+  - `POST /api/admin/showrooms`
+  - `PUT /api/admin/showrooms/[id]`
+  - `PATCH /api/admin/showrooms/[id]/status`
+- 看板汇总：`GET /api/admin/dashboard/summary`
+- 展厅封面上传：`POST /api/admin/upload/showroom-cover`
+
+---
+
+## 二、快速启动
+
+### 1) 安装依赖
 ```bash
 npm install
 ```
 
-2. 创建环境变量文件：
-
+### 2) 配置环境变量
 ```bash
 cp .env.example .env
 ```
 
-Windows PowerShell 可使用：
-
+Windows PowerShell：
 ```powershell
 Copy-Item .env.example .env
 ```
 
-3. 初始化数据库并写入初始数据：
+`.env.example` 当前示例：
+```env
+DATABASE_URL="file:./dev.db"
+```
 
+### 3) 初始化数据库与种子数据
 ```bash
 npm run prisma:deploy
+npm run prisma:generate
 npm run prisma:seed
 ```
 
-## 展厅封面图上传
-
-后台展厅管理页支持上传展厅封面图，图片会保存到服务器本地目录：
-
-```text
-public/uploads/showrooms
-```
-
-数据库 `showrooms.coverImage` 字段只保存可访问路径，例如：
-
-```text
-/uploads/showrooms/xxx.webp
-```
-
-上传限制：
-
-- 推荐图片尺寸：1600×900px。
-- 最低建议尺寸：1200×675px。
-- 建议使用 16:9 横版图片。
-- 支持格式：JPG、PNG、WebP。
-- 最大文件大小：5MB。
-
-公司服务器部署时，需要确保 `public/uploads/showrooms` 目录存在并具备写入权限。如果使用 PM2/Nginx 部署，需要确认 `/uploads/showrooms/*` 静态资源可以被正常访问。
-
-4. 启动开发服务器：
-
+### 4) 启动开发环境
 ```bash
 npm run dev
 ```
 
-5. 打开浏览器访问：
+访问：`http://localhost:3000`
 
-```text
-http://localhost:3000
-```
+---
 
-## 数据库命令
-
-生成 Prisma Client：
-
-```bash
-npm run prisma:generate
-```
-
-创建或应用本地迁移：
-
-```bash
-npm run prisma:migrate -- --name init_database
-```
-
-应用已提交的迁移：
-
-```bash
-npm run prisma:deploy
-```
-
-阶段 9.5-3 新增迁移：
-
-```text
-20260519150000_add_customer_and_reception_fields
-```
-
-本迁移为 `appointments` 增加客户类型、关注方向、方案交流及内部接待安排字段，为 `leads` 增加客户线索沉淀字段。所有新增业务字段均为可选字段，已有预约、审批、留资和展厅数据可直接保留。更新代码后请先执行：
-
-```bash
-npm run prisma:deploy
-npm run prisma:generate
-```
-
-执行 seed：
-
-```bash
-npm run prisma:seed
-```
-
-## 初始数据
-
-seed 会预置 4 个展厅：
-
-- 北京公司展厅
-- 西安公司展厅
-- 阜阳实训基地展厅
-- 新疆实训基地展厅
-
-seed 会预置 1 个后台管理员：
-
-- 用户名：`admin`
-- 初始密码：`Admin@123456`
-
-密码使用 PBKDF2 哈希后写入 `passwordHash` 字段，不保存明文密码。
-
-## 阶段 1 验收路由
-
-- 用户端首页：`/`
-- 展厅列表：`/showrooms`
-- 展厅详情：`/showrooms/1`
-- 在线预约：`/appointment`
-- 预约成功：`/appointment/success`
-- 后台登录：`/admin/login`
-- 预约管理：`/admin/appointments`
-- 预约详情：`/admin/appointments/1`
-- 留资管理：`/admin/leads`
-- 展厅管理：`/admin/showrooms`
-
-## 可用命令
+## 三、可用脚本
 
 ```bash
 npm run dev
 npm run build
+npm run start
 npm run lint
 npm run prisma:generate
-npm run prisma:migrate -- --name init_database
+npm run prisma:migrate -- --name <migration_name>
 npm run prisma:deploy
 npm run prisma:seed
+```
+
+说明：
+- 本地开发新增字段时，通常使用 `prisma:migrate`。
+- 线上/部署环境应用已提交迁移，使用 `prisma:deploy`。
+
+---
+
+## 四、数据库模型与关键状态
+
+### 1) 展厅状态（ShowroomStatus）
+- `open`：开放预约，对用户可见，可提交预约
+- `closed`：暂停预约，对用户可见，不可提交预约
+- `hidden`：后台可见，用户端隐藏
+- `deleted`：软删除状态，默认不在后台列表展示（可筛选）
+
+### 2) 预约状态（AppointmentStatus）
+- `pending`
+- `approved`
+- `rejected`
+- `completed`
+- `cancelled`
+
+### 3) 其他关键点
+- 后台账号角色：`admin` / `marketer`
+- 后台登录态：Cookie Session（服务端校验）
+- 预约、线索、展厅之间存在关联关系（见 `prisma/schema.prisma`）
+
+---
+
+## 五、展厅封面上传说明
+
+- 上传目录：`public/uploads/showrooms`
+- 数据库存储：`showrooms.coverImage` 保存可访问路径（例如 `/uploads/showrooms/xxx.webp`）
+- 建议运维检查：
+  - 目录存在并具备写权限
+  - 反向代理/静态资源配置允许访问 `/uploads/showrooms/*`
+
+---
+
+## 六、Seed 初始数据
+
+`npm run prisma:seed` 会写入：
+- 4 个示例展厅（北京、西安、阜阳、新乡）
+- 1 个后台管理员账号：
+  - 用户名：`admin`
+  - 初始密码：`Admin@123456`
+
+安全说明：密码写入数据库时为哈希值，不保存明文。
+
+---
+
+## 七、已知注意事项（客观）
+
+- 历史文件曾出现中文编码错配导致乱码。当前 README 已改为 UTF-8 文本。
+- 如果页面仍出现中文乱码，请确认编辑器/终端文件编码均为 UTF-8。
+
+---
+
+## 八、项目目录（核心）
+
+```text
+src/
+  app/                    # 页面与 API 路由（App Router）
+  components/             # UI 与表单组件
+  lib/                    # 业务逻辑、鉴权、数据访问
+prisma/
+  schema.prisma           # 数据模型
+  migrations/             # 迁移脚本
+  seed.mjs                # 初始化数据
+public/
+  uploads/showrooms/      # 展厅封面上传目录
 ```

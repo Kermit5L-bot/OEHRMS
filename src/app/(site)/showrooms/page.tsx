@@ -5,6 +5,11 @@ export const dynamic = "force-dynamic";
 
 export default async function ShowroomsPage() {
   const showrooms = await prisma.showroom.findMany({
+    where: {
+      status: {
+        in: ["open", "closed"],
+      },
+    },
     orderBy: { sortOrder: "asc" },
   });
 
