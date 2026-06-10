@@ -186,14 +186,11 @@ export async function getDashboardSummary() {
         receptionNote: true,
         receptionist: true,
         followUpNote: true,
-        applicantName: true,
-        internalContactInfo: true,
         visitStartTime: true,
         visitEndTime: true,
         actualReceptionLocation: true,
         receptionScheduleNote: true,
         receptionPreparationNote: true,
-        mainVisitorInfo: true,
       },
     }),
     prisma.appointment.findMany({
@@ -243,8 +240,6 @@ export async function getDashboardSummary() {
   for (const appointment of receptionAppointments) {
     if (hasText(appointment.receptionNote) || hasText(appointment.followUpNote)) receptionNoteCount += 1;
     if (
-      hasText(appointment.applicantName) ||
-      hasText(appointment.internalContactInfo) ||
       appointment.visitStartTime ||
       appointment.visitEndTime ||
       hasText(appointment.actualReceptionLocation) ||
@@ -253,7 +248,7 @@ export async function getDashboardSummary() {
     ) {
       internalArrangementCount += 1;
     }
-    if (hasText(appointment.receptionist) || hasText(appointment.mainVisitorInfo)) guideArrangementCount += 1;
+    if (hasText(appointment.receptionist)) guideArrangementCount += 1;
   }
 
   return {

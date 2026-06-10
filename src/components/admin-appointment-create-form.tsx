@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { CalendarDays, MessageSquareText, Send, UserRound } from "lucide-react";
+import { Save } from "lucide-react";
 import {
   customerTypeOptions,
   getTodayDateString,
@@ -10,17 +10,14 @@ import {
   phonePattern,
   solutionConsultingOptions,
 } from "@/lib/appointments";
-import type { ShowroomStatusValue } from "@/lib/showrooms";
 
 type ShowroomOption = {
   id: number;
   name: string;
-  status: ShowroomStatusValue;
 };
 
-type AppointmentFormProps = {
+type AdminAppointmentCreateFormProps = {
   showrooms: ShowroomOption[];
-  initialShowroomId?: number;
 };
 
 type FormState = {
@@ -89,13 +86,10 @@ const requestOptions = [
   { value: "yes", label: "需要" },
 ];
 
-export function AppointmentForm({ showrooms, initialShowroomId }: AppointmentFormProps) {
+export function AdminAppointmentCreateForm({ showrooms }: AdminAppointmentCreateFormProps) {
   const router = useRouter();
   const today = useMemo(() => getTodayDateString(), []);
-  const [form, setForm] = useState<FormState>({
-    ...initialState,
-    showroomId: initialShowroomId ? String(initialShowroomId) : "",
-  });
+  const [form, setForm] = useState<FormState>(initialState);
   const [errors, setErrors] = useState<FormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -114,7 +108,6 @@ export function AppointmentForm({ showrooms, initialShowroomId }: AppointmentFor
           : [...current.interestAreas, value],
       };
     });
-    setErrors((current) => ({ ...current, submit: undefined }));
   }
 
   function validate() {
@@ -125,7 +118,7 @@ export function AppointmentForm({ showrooms, initialShowroomId }: AppointmentFor
     if (!form.visitDate) nextErrors.visitDate = "请选择参观日期";
     if (form.visitDate && form.visitDate < today) nextErrors.visitDate = "参观日期不能早于今天";
     if (!form.visitTimeSlot) nextErrors.visitTimeSlot = "请选择参观时间段";
-    if (!Number.isInteger(visitorCount) || visitorCount < 1) nextErrors.visitorCount = "参观人数至少 1 人";
+    if (!Number.isInteger(visitorCount) || visitorCount < 1) nextErrors.visitorCount = "参观人数至少为 1 人";
     if (!form.contactName.trim()) nextErrors.contactName = "请填写客户姓名";
     if (!form.contactPhone.trim()) nextErrors.contactPhone = "请填写手机号码";
     if (form.contactPhone.trim() && !phonePattern.test(form.contactPhone.trim())) {
@@ -146,56 +139,25 @@ export function AppointmentForm({ showrooms, initialShowroomId }: AppointmentFor
 
     setIsSubmitting(true);
     try {
-      const response = await fetch("/api/appointments", {
+      const response = await fetch("/api/admin/appointments", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
+          ...form,
           showroomId: Number(form.showroomId),
-          visitDate: form.visitDate,
-          visitTimeSlot: form.visitTimeSlot,
           visitorCount: Number(form.visitorCount),
-          contactName: form.contactName,
-          contactPhone: form.contactPhone,
-          companyName: form.companyName,
-          position: form.position,
-          internalContactInfo: form.internalContactInfo,
-          customerLevel: form.customerLevel,
-          mainVisitorInfo: form.mainVisitorInfo,
-          industry: form.industry,
-          customerType: form.customerType,
-          interestAreas: form.interestAreas,
-          needSolutionConsulting: form.needSolutionConsulting,
-          needVehicle: form.needVehicle,
-          vehicleRequirement: form.vehicleRequirement,
-          needAccommodation: form.needAccommodation,
-          accommodationRequirement: form.accommodationRequirement,
-          needDining: form.needDining,
-          diningRequirement: form.diningRequirement,
-          giftPreparation: form.giftPreparation,
-          giftRequirement: form.giftRequirement,
-          visitPurpose: form.visitPurpose,
-          needGuide: form.needGuide,
-          customerRemark: form.customerRemark,
         }),
       });
-
       const result = await response.json();
       if (!response.ok) {
-        setErrors({ submit: result.error || "预约提交失败，请稍后重试" });
+        setErrors({ submit: result.error || "预约创建失败，请稍后重试" });
         return;
       }
 
-      const params = new URLSearchParams({
-        appointmentNo: result.appointmentNo,
-        showroomName: result.showroomName,
-        visitDate: result.visitDate,
-        visitTimeSlot: result.visitTimeSlot,
-        contactName: result.contactName,
-        contactPhone: result.maskedPhone,
-      });
-      router.push(`/appointment/success?${params.toString()}`);
+      router.push(`/admin/appointments/${result.appointment.id}`);
+      router.refresh();
     } catch {
       setErrors({ submit: "网络异常，请稍后重试" });
     } finally {
@@ -203,49 +165,36 @@ export function AppointmentForm({ showrooms, initialShowroomId }: AppointmentFor
     }
   }
 
-  if (showrooms.length === 0) {
-    return (
-      <div className="glass-panel rounded-lg p-8 text-center">
-        <h2 className="text-lg font-semibold text-white">暂无可预约展厅</h2>
-        <p className="mt-2 text-sm text-slate-300">请先初始化展厅数据，再提交预约。</p>
-      </div>
-    );
-  }
-
   return (
-    <form onSubmit={handleSubmit} className="glass-panel rounded-lg p-5 sm:p-6">
-      <FormGroup title="参观信息" icon={CalendarDays}>
+    <form onSubmit={handleSubmit} className="admin-panel rounded-lg p-6">
+      <FormGroup title="参观信息">
         <Field label="预约展厅" error={errors.showroomId} required>
           <select value={form.showroomId} onChange={(event) => updateField("showroomId", event.target.value)} className="form-control">
             <option value="">请选择展厅</option>
             {showrooms.map((showroom) => (
-              <option key={showroom.id} value={showroom.id} disabled={showroom.status !== "open"}>
+              <option key={showroom.id} value={showroom.id}>
                 {showroom.name}
-                {showroom.status !== "open" ? "（暂停预约）" : ""}
               </option>
             ))}
           </select>
         </Field>
-
         <Field label="参观日期" error={errors.visitDate} required>
           <input type="date" min={today} value={form.visitDate} onChange={(event) => updateField("visitDate", event.target.value)} className="form-control" />
         </Field>
-
         <Field label="参观时间段" error={errors.visitTimeSlot} required>
           <select value={form.visitTimeSlot} onChange={(event) => updateField("visitTimeSlot", event.target.value)} className="form-control">
             <option value="morning">上午</option>
             <option value="afternoon">下午</option>
           </select>
         </Field>
-
         <Field label="参观人数" error={errors.visitorCount} required>
           <input type="number" min={1} value={form.visitorCount} onChange={(event) => updateField("visitorCount", event.target.value)} className="form-control" />
         </Field>
       </FormGroup>
 
-      <FormGroup title="联系人信息" icon={UserRound}>
+      <FormGroup title="客户与申请信息">
         <Field label="客户姓名" error={errors.contactName} required>
-          <input value={form.contactName} onChange={(event) => updateField("contactName", event.target.value)} className="form-control" placeholder="请输入联系人姓名" />
+          <input value={form.contactName} onChange={(event) => updateField("contactName", event.target.value)} className="form-control" placeholder="请输入客户联系人姓名" />
         </Field>
         <Field label="手机号码" error={errors.contactPhone} required>
           <input value={form.contactPhone} onChange={(event) => updateField("contactPhone", event.target.value)} className="form-control" placeholder="例如：13800000000" inputMode="tel" />
@@ -256,27 +205,14 @@ export function AppointmentForm({ showrooms, initialShowroomId }: AppointmentFor
         <Field label="职务">
           <input value={form.position} onChange={(event) => updateField("position", event.target.value)} className="form-control" placeholder="选填" />
         </Field>
-        <Field label="对接人">
-          <input
-            value={form.internalContactInfo}
-            onChange={(event) => updateField("internalContactInfo", event.target.value)}
-            className="form-control"
-            placeholder="请输入内部销售或客户经理姓名"
-          />
+        <Field label="内部对接人">
+          <input value={form.internalContactInfo} onChange={(event) => updateField("internalContactInfo", event.target.value)} className="form-control" placeholder="请输入内部销售或客户经理姓名" />
         </Field>
         <Field label="来访客户级别">
           <input value={form.customerLevel} onChange={(event) => updateField("customerLevel", event.target.value)} className="form-control" placeholder="选填，例如：重点客户、普通客户" />
         </Field>
         <Field label="所属行业">
           <input value={form.industry} onChange={(event) => updateField("industry", event.target.value)} className="form-control" placeholder="选填" />
-        </Field>
-        <Field label="主要来访人员信息" className="md:col-span-2">
-          <textarea
-            value={form.mainVisitorInfo}
-            onChange={(event) => updateField("mainVisitorInfo", event.target.value)}
-            className="form-control min-h-24"
-            placeholder="选填，可填写来访人员姓名、职务、人数补充等"
-          />
         </Field>
         <Field label="客户类型">
           <select value={form.customerType} onChange={(event) => updateField("customerType", event.target.value)} className="form-control">
@@ -288,25 +224,12 @@ export function AppointmentForm({ showrooms, initialShowroomId }: AppointmentFor
             ))}
           </select>
         </Field>
-        <Field label="是否需要方案交流">
-          <select value={form.needSolutionConsulting} onChange={(event) => updateField("needSolutionConsulting", event.target.value)} className="form-control">
-            <option value="">选填</option>
-            {solutionConsultingOptions.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-        </Field>
-        <Field label="是否需要接待讲解">
-          <label className="flex min-h-12 items-center gap-3 rounded-md border border-cyan-300/20 bg-slate-950/35 px-3 text-sm text-slate-100">
-            <input type="checkbox" checked={form.needGuide} onChange={(event) => updateField("needGuide", event.target.checked)} className="h-4 w-4 rounded border-slate-300" />
-            需要安排接待讲解
-          </label>
+        <Field label="主要来访人员信息" className="md:col-span-2">
+          <textarea value={form.mainVisitorInfo} onChange={(event) => updateField("mainVisitorInfo", event.target.value)} className="form-control min-h-24" placeholder="选填，可填写来访人员姓名、职务、人数补充等" />
         </Field>
       </FormGroup>
 
-      <FormGroup title="接待需求" icon={MessageSquareText}>
+      <FormGroup title="接待需求">
         <Field label="车辆接送安排">
           <select value={form.needVehicle} onChange={(event) => updateField("needVehicle", event.target.value)} className="form-control">
             {requestOptions.map((option) => (
@@ -321,12 +244,6 @@ export function AppointmentForm({ showrooms, initialShowroomId }: AppointmentFor
             ))}
           </select>
         </Field>
-        <Field label="车辆接送具体要求" className="md:col-span-2">
-          <textarea value={form.vehicleRequirement} onChange={(event) => updateField("vehicleRequirement", event.target.value)} className="form-control min-h-24" placeholder="选填，例如：到站时间、接送地点、车辆数量等" />
-        </Field>
-        <Field label="住宿具体要求" className="md:col-span-2">
-          <textarea value={form.accommodationRequirement} onChange={(event) => updateField("accommodationRequirement", event.target.value)} className="form-control min-h-24" placeholder="选填，例如：入住时间、房间数量、特殊要求等" />
-        </Field>
         <Field label="宴请安排">
           <select value={form.needDining} onChange={(event) => updateField("needDining", event.target.value)} className="form-control">
             {requestOptions.map((option) => (
@@ -337,6 +254,12 @@ export function AppointmentForm({ showrooms, initialShowroomId }: AppointmentFor
         <Field label="礼品准备">
           <input value={form.giftPreparation} onChange={(event) => updateField("giftPreparation", event.target.value)} className="form-control" placeholder="选填，例如：需要、无需、待确认" />
         </Field>
+        <Field label="车辆接送具体要求" className="md:col-span-2">
+          <textarea value={form.vehicleRequirement} onChange={(event) => updateField("vehicleRequirement", event.target.value)} className="form-control min-h-24" placeholder="选填，例如：到站时间、接送地点、车辆数量等" />
+        </Field>
+        <Field label="住宿具体要求" className="md:col-span-2">
+          <textarea value={form.accommodationRequirement} onChange={(event) => updateField("accommodationRequirement", event.target.value)} className="form-control min-h-24" placeholder="选填，例如：入住时间、房间数量、特殊要求等" />
+        </Field>
         <Field label="宴请具体要求" className="md:col-span-2">
           <textarea value={form.diningRequirement} onChange={(event) => updateField("diningRequirement", event.target.value)} className="form-control min-h-24" placeholder="选填，例如：人数、餐标、忌口、地点建议等" />
         </Field>
@@ -345,61 +268,59 @@ export function AppointmentForm({ showrooms, initialShowroomId }: AppointmentFor
         </Field>
       </FormGroup>
 
-      <FormGroup title="需求备注" icon={MessageSquareText}>
+      <FormGroup title="需求备注">
         <Field label="关注方向" className="md:col-span-2">
           <div className="grid gap-2 sm:grid-cols-2">
             {interestAreaOptions.map((option) => (
-              <label key={option.value} className="flex min-h-11 items-center gap-2 rounded-md border border-cyan-300/20 bg-slate-950/30 px-3 text-sm text-slate-100">
-                <input
-                  type="checkbox"
-                  checked={form.interestAreas.includes(option.value)}
-                  onChange={() => toggleInterestArea(option.value)}
-                  className="h-4 w-4 rounded border-slate-300"
-                />
+              <label key={option.value} className="flex min-h-11 items-center gap-2 rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-700">
+                <input type="checkbox" checked={form.interestAreas.includes(option.value)} onChange={() => toggleInterestArea(option.value)} className="h-4 w-4 rounded border-slate-300" />
                 {option.label}
               </label>
             ))}
           </div>
         </Field>
+        <Field label="是否需要方案交流">
+          <select value={form.needSolutionConsulting} onChange={(event) => updateField("needSolutionConsulting", event.target.value)} className="form-control">
+            <option value="">选填</option>
+            {solutionConsultingOptions.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </Field>
+        <Field label="是否需要接待讲解">
+          <label className="flex min-h-11 items-center gap-3 rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-700">
+            <input type="checkbox" checked={form.needGuide} onChange={(event) => updateField("needGuide", event.target.checked)} className="h-4 w-4 rounded border-slate-300" />
+            需要安排接待讲解
+          </label>
+        </Field>
         <Field label="参观目的" className="md:col-span-2">
-          <textarea value={form.visitPurpose} onChange={(event) => updateField("visitPurpose", event.target.value)} className="form-control min-h-28" placeholder="选填，可填写关注方向或参观需求" />
+          <textarea value={form.visitPurpose} onChange={(event) => updateField("visitPurpose", event.target.value)} className="form-control min-h-24" placeholder="选填，可填写关注方向或参观需求" />
         </Field>
         <Field label="客户备注" className="md:col-span-2">
-          <textarea value={form.customerRemark} onChange={(event) => updateField("customerRemark", event.target.value)} className="form-control min-h-28" placeholder="选填，可填写其他补充说明" />
+          <textarea value={form.customerRemark} onChange={(event) => updateField("customerRemark", event.target.value)} className="form-control min-h-24" placeholder="选填，可填写其他补充说明" />
         </Field>
       </FormGroup>
 
-      {errors.submit ? <p className="mt-5 rounded-md bg-red-500/12 px-4 py-3 text-sm font-medium text-red-100">{errors.submit}</p> : null}
+      {errors.submit ? <p className="mt-5 rounded-md bg-red-50 px-4 py-3 text-sm font-medium text-red-700">{errors.submit}</p> : null}
 
-      <div className="mt-6">
-        <button
-          type="submit"
-          disabled={isSubmitting}
-          className="min-h-12 w-full rounded-md bg-blue-600 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-blue-950/30 hover:bg-blue-500 disabled:cursor-not-allowed disabled:bg-slate-600 sm:w-auto"
-        >
-          <Send className="mr-2 inline h-4 w-4 align-[-2px]" />
-          {isSubmitting ? "提交中..." : "提交预约"}
-        </button>
-      </div>
+      <button
+        type="submit"
+        disabled={isSubmitting}
+        className="mt-6 inline-flex min-h-11 items-center justify-center gap-2 rounded-md bg-blue-600 px-5 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-slate-300"
+      >
+        <Save className="h-4 w-4" />
+        {isSubmitting ? "保存中..." : "保存预约"}
+      </button>
     </form>
   );
 }
 
-function FormGroup({
-  title,
-  icon: Icon,
-  children,
-}: {
-  title: string;
-  icon: React.ComponentType<{ className?: string }>;
-  children: React.ReactNode;
-}) {
+function FormGroup({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <section className="border-b border-cyan-300/15 py-5 first:pt-0 last:border-b-0">
-      <h2 className="inline-flex items-center gap-2 text-base font-bold text-white">
-        <Icon className="h-5 w-5 text-cyan-200" />
-        {title}
-      </h2>
+    <section className="border-b border-slate-100 py-5 first:pt-0 last:border-b-0">
+      <h2 className="text-base font-bold text-slate-950">{title}</h2>
       <div className="mt-4 grid gap-4 md:grid-cols-2">{children}</div>
     </section>
   );
@@ -420,12 +341,12 @@ function Field({
 }) {
   return (
     <label className={`block ${className}`}>
-      <span className="text-sm font-semibold text-slate-200">
+      <span className="text-sm font-semibold text-slate-700">
         {label}
-        {required ? <span className="text-cyan-200"> *</span> : null}
+        {required ? <span className="text-red-500"> *</span> : null}
       </span>
       <div className="mt-2">{children}</div>
-      {error ? <span className="mt-1 block text-xs text-red-200">{error}</span> : null}
+      {error ? <span className="mt-1 block text-xs text-red-600">{error}</span> : null}
     </label>
   );
 }

@@ -1,6 +1,7 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 import type { AppointmentStatus, Prisma } from "@prisma/client";
-import { CheckCircle2, ClipboardList, Clock, UsersRound } from "lucide-react";
+import { CheckCircle2, ClipboardList, Clock, Download, Plus, Search, UsersRound } from "lucide-react";
+import { AdminAppointmentDeleteButton } from "@/components/admin-appointment-delete-button";
 import { AppointmentStatusBadge } from "@/components/appointment-status-badge";
 import { formatDate, formatDateTime, appointmentStatusLabels } from "@/lib/admin-appointments";
 import {
@@ -52,6 +53,17 @@ function getPageHref(page: number, params: Awaited<AdminAppointmentsPageProps["s
   if (params.keyword) query.set("keyword", params.keyword);
   const text = query.toString();
   return `/admin/appointments${text ? `?${text}` : ""}`;
+}
+
+function getExportHref(params: Awaited<AdminAppointmentsPageProps["searchParams"]>) {
+  const query = new URLSearchParams();
+  if (params.status) query.set("status", params.status);
+  if (params.showroomId) query.set("showroomId", params.showroomId);
+  if (params.startDate) query.set("startDate", params.startDate);
+  if (params.endDate) query.set("endDate", params.endDate);
+  if (params.keyword) query.set("keyword", params.keyword);
+  const text = query.toString();
+  return `/api/admin/appointments/export${text ? `?${text}` : ""}`;
 }
 
 export default async function AdminAppointmentsPage({ searchParams }: AdminAppointmentsPageProps) {
@@ -115,8 +127,20 @@ export default async function AdminAppointmentsPage({ searchParams }: AdminAppoi
           <h1 className="text-3xl font-bold text-slate-950">预约管理</h1>
           <p className="mt-3 text-slate-600">查看、筛选并进入预约详情处理审批和接待备注。</p>
         </div>
-        <div className="rounded-md bg-white px-4 py-3 text-sm text-slate-600 shadow-sm">
-          共 <span className="font-semibold text-slate-950">{total}</span> 条预约
+        <div className="flex flex-col gap-2 sm:items-end">
+          <div className="rounded-md bg-white px-4 py-3 text-sm text-slate-600 shadow-sm">
+            共 <span className="font-semibold text-slate-950">{total}</span> 条预约
+          </div>
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <Link href="/admin/appointments/new" className="inline-flex min-h-10 items-center justify-center gap-2 rounded-md bg-[#2563EB] px-4 py-2 text-sm font-semibold !text-white shadow-lg shadow-blue-900/15 ring-1 ring-blue-500/20 hover:bg-[#1D4ED8]">
+              <Plus className="h-4 w-4 text-white" />
+              <span className="text-white">新增预约</span>
+            </Link>
+            <Link href={getExportHref(params)} className="inline-flex min-h-10 items-center justify-center gap-2 rounded-md border border-blue-200 bg-white px-4 py-2 text-sm font-semibold text-blue-700 shadow-sm hover:bg-blue-50">
+              <Download className="h-4 w-4" />
+              按当前筛选导出 Excel
+            </Link>
+          </div>
         </div>
       </div>
 
@@ -146,8 +170,9 @@ export default async function AdminAppointmentsPage({ searchParams }: AdminAppoi
         <input name="startDate" type="date" defaultValue={params.startDate || ""} className="form-control" />
         <input name="endDate" type="date" defaultValue={params.endDate || ""} className="form-control" />
         <input name="keyword" defaultValue={params.keyword || ""} placeholder="姓名 / 手机号 / 公司" className="form-control" />
-        <button className="min-h-11 rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700">
-          筛选
+        <button className="inline-flex min-h-11 w-fit min-w-28 items-center justify-center gap-2 rounded-md bg-blue-600 px-5 py-2 text-sm font-semibold text-white hover:bg-blue-700">
+          <Search className="h-4 w-4" />
+          <span>查询</span>
         </button>
       </form>
 
@@ -191,9 +216,12 @@ export default async function AdminAppointmentsPage({ searchParams }: AdminAppoi
                   <td className="whitespace-nowrap px-4 py-3"><AppointmentStatusBadge status={appointment.status} /></td>
                   <td className="whitespace-nowrap px-4 py-3 text-slate-600">{formatDateTime(appointment.createdAt)}</td>
                   <td className="whitespace-nowrap px-4 py-3">
-                    <Link href={`/admin/appointments/${appointment.id}`} className="font-semibold text-blue-700 hover:text-blue-900">
-                      查看详情
-                    </Link>
+                    <div className="flex items-center gap-3">
+                      <Link href={`/admin/appointments/${appointment.id}`} className="font-semibold text-blue-700 hover:text-blue-900">
+                        查看详情
+                      </Link>
+                      <AdminAppointmentDeleteButton appointmentId={appointment.id} appointmentNo={appointment.appointmentNo} />
+                    </div>
                   </td>
                 </tr>
               ))}

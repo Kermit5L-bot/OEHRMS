@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { Prisma } from "@prisma/client";
-import { MessageSquareText, Search, UserRound } from "lucide-react";
+import { Download, MessageSquareText, Search, UserRound } from "lucide-react";
 import { AdminLeadNoteForm } from "@/components/admin-lead-note-form";
 import { AppointmentStatusBadge } from "@/components/appointment-status-badge";
 import { formatDate, formatDateTime } from "@/lib/admin-appointments";
@@ -28,6 +28,20 @@ function getPageHref(page: number, keyword?: string) {
   if (keyword) query.set("keyword", keyword);
   const text = query.toString();
   return `/admin/leads${text ? `?${text}` : ""}`;
+}
+
+function getExportHref(keyword?: string) {
+  const query = new URLSearchParams();
+  if (keyword) query.set("keyword", keyword);
+  const text = query.toString();
+  return `/api/admin/leads/export${text ? `?${text}` : ""}`;
+}
+
+function getRelatedAppointmentsHref(phone: string, keyword?: string) {
+  const query = new URLSearchParams({ phone });
+  if (keyword) query.set("keyword", keyword);
+
+  return `/admin/leads?${query.toString()}#appointment-records`;
 }
 
 export default async function AdminLeadsPage({ searchParams }: AdminLeadsPageProps) {
@@ -75,8 +89,14 @@ export default async function AdminLeadsPage({ searchParams }: AdminLeadsPagePro
           <h1 className="text-3xl font-bold text-slate-950">留资管理</h1>
           <p className="mt-3 text-slate-600">沉淀预约客户线索，维护后续跟进备注。</p>
         </div>
-        <div className="rounded-md bg-white px-4 py-3 text-sm text-slate-600 shadow-sm">
-          共 <span className="font-semibold text-slate-950">{total}</span> 条留资
+        <div className="flex flex-col gap-2 sm:items-end">
+          <div className="rounded-md bg-white px-4 py-3 text-sm text-slate-600 shadow-sm">
+            共 <span className="font-semibold text-slate-950">{total}</span> 条留资
+          </div>
+          <Link href={getExportHref(keyword)} className="inline-flex min-h-10 items-center justify-center gap-2 rounded-md border border-blue-200 bg-white px-4 py-2 text-sm font-semibold text-blue-700 shadow-sm hover:bg-blue-50">
+            <Download className="h-4 w-4" />
+            按当前筛选导出 Excel
+          </Link>
         </div>
       </div>
 
@@ -143,7 +163,7 @@ export default async function AdminLeadsPage({ searchParams }: AdminLeadsPagePro
                   </td>
                   <td className="whitespace-nowrap px-4 py-3 text-slate-600">{formatDateTime(lead.updatedAt)}</td>
                   <td className="whitespace-nowrap px-4 py-3">
-                    <Link href={`/admin/leads?phone=${encodeURIComponent(lead.contactPhone)}${keyword ? `&keyword=${encodeURIComponent(keyword)}` : ""}`} className="font-semibold text-blue-700 hover:text-blue-900">
+                    <Link href={getRelatedAppointmentsHref(lead.contactPhone, keyword)} className="font-semibold text-blue-700 hover:text-blue-900">
                       查看预约记录
                     </Link>
                   </td>
@@ -166,7 +186,7 @@ export default async function AdminLeadsPage({ searchParams }: AdminLeadsPagePro
       </div>
 
       {selectedPhone ? (
-        <section className="admin-panel mt-8 rounded-lg p-6">
+        <section id="appointment-records" className="admin-panel mt-8 scroll-mt-6 rounded-lg p-6">
           <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
             <div>
               <h2 className="text-xl font-bold text-slate-950">客户预约记录</h2>

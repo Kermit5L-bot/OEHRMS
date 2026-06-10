@@ -9,21 +9,9 @@ type InternalReceptionState = {
   receptionist: string;
   receptionNote: string;
   followUpNote: string;
-  applicantName: string;
-  internalContactInfo: string;
-  customerLevel: string;
-  mainVisitorInfo: string;
   visitStartTime: string;
   visitEndTime: string;
   actualReceptionLocation: string;
-  needVehicle: string;
-  vehicleRequirement: string;
-  needAccommodation: string;
-  accommodationRequirement: string;
-  needDining: string;
-  diningRequirement: string;
-  giftPreparation: string;
-  giftRequirement: string;
   receptionScheduleNote: string;
   receptionPreparationNote: string;
 };
@@ -38,13 +26,6 @@ type ActionMessage = {
   type: "success" | "error";
   text: string;
 };
-
-const yesNoOptions = [
-  { value: "", label: "未设置" },
-  { value: "yes", label: "是" },
-  { value: "no", label: "否" },
-  { value: "pending", label: "待沟通" },
-];
 
 const schedulePlaceholder = [
   "讲师：王老师｜内容：公司介绍｜时间：09:30-10:00｜地点：展厅入口",
@@ -170,23 +151,11 @@ export function AdminAppointmentActions({
           内部接待安排
         </h2>
         <div className="mt-4 grid gap-4">
-          <TextInput label="申请人" value={reception.applicantName} disabled={!canEditNote} onChange={(value) => updateReception("applicantName", value)} />
-          <TextInput label="内部对接人及电话" value={reception.internalContactInfo} disabled={!canEditNote} onChange={(value) => updateReception("internalContactInfo", value)} />
-          <TextInput label="来访客户级别" value={reception.customerLevel} disabled={!canEditNote} onChange={(value) => updateReception("customerLevel", value)} />
-          <TextArea label="主要来访人员信息" value={reception.mainVisitorInfo} disabled={!canEditNote} onChange={(value) => updateReception("mainVisitorInfo", value)} />
           <div className="grid gap-4 sm:grid-cols-2">
             <TextInput label="来访开始时间" type="datetime-local" value={reception.visitStartTime} disabled={!canEditNote} onChange={(value) => updateReception("visitStartTime", value)} />
             <TextInput label="离开时间" type="datetime-local" value={reception.visitEndTime} disabled={!canEditNote} onChange={(value) => updateReception("visitEndTime", value)} />
           </div>
           <TextInput label="实际接待地点" value={reception.actualReceptionLocation} disabled={!canEditNote} onChange={(value) => updateReception("actualReceptionLocation", value)} />
-          <SelectInput label="车辆接送安排" value={reception.needVehicle} disabled={!canEditNote} onChange={(value) => updateReception("needVehicle", value)} />
-          <TextArea label="车辆接送具体要求" value={reception.vehicleRequirement} disabled={!canEditNote} onChange={(value) => updateReception("vehicleRequirement", value)} />
-          <SelectInput label="住宿安排" value={reception.needAccommodation} disabled={!canEditNote} onChange={(value) => updateReception("needAccommodation", value)} />
-          <TextArea label="住宿具体要求" value={reception.accommodationRequirement} disabled={!canEditNote} onChange={(value) => updateReception("accommodationRequirement", value)} />
-          <SelectInput label="宴请安排" value={reception.needDining} disabled={!canEditNote} onChange={(value) => updateReception("needDining", value)} />
-          <TextArea label="宴请具体要求" value={reception.diningRequirement} disabled={!canEditNote} onChange={(value) => updateReception("diningRequirement", value)} />
-          <TextInput label="礼品准备" value={reception.giftPreparation} disabled={!canEditNote} onChange={(value) => updateReception("giftPreparation", value)} />
-          <TextArea label="指定伴手礼说明" value={reception.giftRequirement} disabled={!canEditNote} onChange={(value) => updateReception("giftRequirement", value)} />
           <TextArea label="接待准备事项" value={reception.receptionPreparationNote} disabled={!canEditNote} onChange={(value) => updateReception("receptionPreparationNote", value)} />
           <TextArea label="接待讲解安排" value={reception.receptionScheduleNote} disabled={!canEditNote} onChange={(value) => updateReception("receptionScheduleNote", value)} placeholder={schedulePlaceholder} tall />
         </div>
@@ -262,31 +231,6 @@ function TextArea({
         className={`form-control mt-2 ${tall ? "min-h-40" : "min-h-24"}`}
         placeholder={placeholder}
       />
-    </label>
-  );
-}
-
-function SelectInput({
-  label,
-  value,
-  disabled,
-  onChange,
-}: {
-  label: string;
-  value: string;
-  disabled: boolean;
-  onChange: (value: string) => void;
-}) {
-  return (
-    <label className="block">
-      <span className="text-sm font-medium text-slate-700">{label}</span>
-      <select value={value} onChange={(event) => onChange(event.target.value)} disabled={disabled} className="form-control mt-2">
-        {yesNoOptions.map((option) => (
-          <option key={option.value} value={option.value}>
-            {option.label}
-          </option>
-        ))}
-      </select>
     </label>
   );
 }

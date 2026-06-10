@@ -107,7 +107,6 @@ model Appointment {
   receptionist             String?
   receptionNote            String?           @map("reception_note")
   followUpNote             String?           @map("follow_up_note")
-  applicantName            String?           @map("applicant_name")
   internalContactInfo      String?           @map("internal_contact_info")
   customerLevel            String?           @map("customer_level")
   mainVisitorInfo          String?           @map("main_visitor_info")

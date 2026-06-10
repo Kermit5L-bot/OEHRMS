@@ -87,10 +87,21 @@ export default async function AdminAppointmentDetailPage({ params }: AdminAppoin
             <InfoItem label="手机号码" value={appointment.contactPhone} />
             <InfoItem label="公司名称" value={appointment.companyName} />
             <InfoItem label="职务" value={appointment.position} />
+            <InfoItem label="内部对接人" value={appointment.internalContactInfo} />
+            <InfoItem label="来访客户级别" value={appointment.customerLevel} />
             <InfoItem label="所属行业" value={appointment.industry} />
             <InfoItem label="客户类型" value={getCustomerTypeLabel(appointment.customerType)} />
+            <InfoItem label="主要来访人员信息" value={appointment.mainVisitorInfo} wide />
             <InfoItem label="关注方向" value={getInterestAreaLabels(appointment.interestAreas)} wide />
             <InfoItem label="是否需要方案交流" value={getSolutionConsultingLabel(appointment.needSolutionConsulting)} />
+            <InfoItem label="车辆接送安排" value={getSimpleOptionLabel(appointment.needVehicle)} />
+            <InfoItem label="住宿安排" value={getSimpleOptionLabel(appointment.needAccommodation)} />
+            <InfoItem label="车辆接送具体要求" value={appointment.vehicleRequirement} wide />
+            <InfoItem label="住宿具体要求" value={appointment.accommodationRequirement} wide />
+            <InfoItem label="宴请安排" value={getSimpleOptionLabel(appointment.needDining)} />
+            <InfoItem label="礼品准备" value={appointment.giftPreparation} />
+            <InfoItem label="宴请具体要求" value={appointment.diningRequirement} wide />
+            <InfoItem label="指定伴手礼说明" value={appointment.giftRequirement} wide />
             <InfoItem label="参观目的" value={appointment.visitPurpose} wide />
           </InfoSection>
 
@@ -103,21 +114,9 @@ export default async function AdminAppointmentDetailPage({ params }: AdminAppoin
           </InfoSection>
 
           <InfoSection title="内部接待安排" icon={Settings2}>
-            <InfoItem label="申请人" value={appointment.applicantName} />
-            <InfoItem label="内部对接人及电话" value={appointment.internalContactInfo} />
-            <InfoItem label="来访客户级别" value={appointment.customerLevel} />
-            <InfoItem label="主要来访人员信息" value={appointment.mainVisitorInfo} wide />
             <InfoItem label="来访开始时间" value={formatDateTime(appointment.visitStartTime)} />
             <InfoItem label="离开时间" value={formatDateTime(appointment.visitEndTime)} />
             <InfoItem label="实际接待地点" value={appointment.actualReceptionLocation} />
-            <InfoItem label="车辆接送安排" value={getSimpleOptionLabel(appointment.needVehicle)} />
-            <InfoItem label="车辆接送具体要求" value={appointment.vehicleRequirement} wide />
-            <InfoItem label="住宿安排" value={getSimpleOptionLabel(appointment.needAccommodation)} />
-            <InfoItem label="住宿具体要求" value={appointment.accommodationRequirement} wide />
-            <InfoItem label="宴请安排" value={getSimpleOptionLabel(appointment.needDining)} />
-            <InfoItem label="宴请具体要求" value={appointment.diningRequirement} wide />
-            <InfoItem label="礼品准备" value={appointment.giftPreparation} />
-            <InfoItem label="指定伴手礼说明" value={appointment.giftRequirement} wide />
             <InfoItem label="接待准备事项" value={appointment.receptionPreparationNote} wide />
             <InfoItem label="接待讲解安排" value={appointment.receptionScheduleNote} wide />
           </InfoSection>
@@ -136,21 +135,9 @@ export default async function AdminAppointmentDetailPage({ params }: AdminAppoin
             receptionist: appointment.receptionist || "",
             receptionNote: appointment.receptionNote || "",
             followUpNote: appointment.followUpNote || "",
-            applicantName: appointment.applicantName || "",
-            internalContactInfo: appointment.internalContactInfo || "",
-            customerLevel: appointment.customerLevel || "",
-            mainVisitorInfo: appointment.mainVisitorInfo || "",
             visitStartTime: formatDateTimeLocal(appointment.visitStartTime),
             visitEndTime: formatDateTimeLocal(appointment.visitEndTime),
             actualReceptionLocation: appointment.actualReceptionLocation || "",
-            needVehicle: appointment.needVehicle || "",
-            vehicleRequirement: appointment.vehicleRequirement || "",
-            needAccommodation: appointment.needAccommodation || "",
-            accommodationRequirement: appointment.accommodationRequirement || "",
-            needDining: appointment.needDining || "",
-            diningRequirement: appointment.diningRequirement || "",
-            giftPreparation: appointment.giftPreparation || "",
-            giftRequirement: appointment.giftRequirement || "",
             receptionScheduleNote: appointment.receptionScheduleNote || "",
             receptionPreparationNote: appointment.receptionPreparationNote || "",
           }}

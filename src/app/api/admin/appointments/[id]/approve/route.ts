@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getCurrentAdminUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { sendAppointmentApprovedSms } from "@/lib/sms";
 
 type RouteContext = {
   params: Promise<{
@@ -49,6 +50,19 @@ export async function POST(request: Request, { params }: RouteContext) {
       receptionist: trimOptional(payload.receptionist),
       receptionNote: trimOptional(payload.receptionNote),
     },
+    include: {
+      showroom: true,
+    },
+  });
+
+  sendAppointmentApprovedSms({
+    phone: updated.contactPhone,
+    appointmentNo: updated.appointmentNo,
+    showroomName: updated.showroom.name,
+    visitDate: updated.visitDate,
+    timeSlot: updated.visitTimeSlot,
+  }).catch((error) => {
+    console.error("SMS_SEND_FAILED", error);
   });
 
   return NextResponse.json({ appointment: updated });

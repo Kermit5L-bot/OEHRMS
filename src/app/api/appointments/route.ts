@@ -11,6 +11,7 @@ import {
   phonePattern,
 } from "@/lib/appointments";
 import { prisma } from "@/lib/prisma";
+import { sendWecomAppointmentNotification } from "@/lib/wecom";
 
 type AppointmentPayload = {
   showroomId?: unknown;
@@ -21,10 +22,21 @@ type AppointmentPayload = {
   contactPhone?: unknown;
   companyName?: unknown;
   position?: unknown;
+  internalContactInfo?: unknown;
+  customerLevel?: unknown;
+  mainVisitorInfo?: unknown;
   industry?: unknown;
   customerType?: unknown;
   interestAreas?: unknown;
   needSolutionConsulting?: unknown;
+  needVehicle?: unknown;
+  vehicleRequirement?: unknown;
+  needAccommodation?: unknown;
+  accommodationRequirement?: unknown;
+  needDining?: unknown;
+  diningRequirement?: unknown;
+  giftPreparation?: unknown;
+  giftRequirement?: unknown;
   visitPurpose?: unknown;
   needGuide?: unknown;
   customerRemark?: unknown;
@@ -84,6 +96,9 @@ export async function POST(request: Request) {
   const contactPhone = trimRequired(payload.contactPhone);
   const companyName = trimRequired(payload.companyName);
   const position = trimOptional(payload.position);
+  const internalContactInfo = trimOptional(payload.internalContactInfo);
+  const customerLevel = trimOptional(payload.customerLevel);
+  const mainVisitorInfo = trimOptional(payload.mainVisitorInfo);
   const industry = trimOptional(payload.industry);
   const customerType = isValidCustomerType(payload.customerType) ? payload.customerType : null;
   const interestAreas = normalizeInterestAreas(payload.interestAreas);
@@ -91,6 +106,14 @@ export async function POST(request: Request) {
     ? payload.needSolutionConsulting
     : null;
   const visitPurpose = trimOptional(payload.visitPurpose);
+  const needVehicle = trimOptional(payload.needVehicle);
+  const vehicleRequirement = trimOptional(payload.vehicleRequirement);
+  const needAccommodation = trimOptional(payload.needAccommodation);
+  const accommodationRequirement = trimOptional(payload.accommodationRequirement);
+  const needDining = trimOptional(payload.needDining);
+  const diningRequirement = trimOptional(payload.diningRequirement);
+  const giftPreparation = trimOptional(payload.giftPreparation);
+  const giftRequirement = trimOptional(payload.giftRequirement);
   const customerRemark = trimOptional(payload.customerRemark);
   const needGuide = typeof payload.needGuide === "boolean" ? payload.needGuide : true;
 
@@ -148,10 +171,21 @@ export async function POST(request: Request) {
           contactPhone,
           companyName,
           position,
+          internalContactInfo,
+          customerLevel,
+          mainVisitorInfo,
           industry,
           customerType,
           interestAreas,
           needSolutionConsulting,
+          needVehicle,
+          vehicleRequirement,
+          needAccommodation,
+          accommodationRequirement,
+          needDining,
+          diningRequirement,
+          giftPreparation,
+          giftRequirement,
           visitPurpose,
           needGuide,
           customerRemark,
@@ -203,17 +237,57 @@ export async function POST(request: Request) {
       }
 
       return {
+        appointmentId: appointment.id,
         appointmentNo: appointment.appointmentNo,
         showroomName: showroom.name,
         visitDate,
         visitTimeSlot,
+        visitorCount,
         contactName,
+        companyName,
+        internalContactInfo,
+        customerLevel,
+        needVehicle,
+        needAccommodation,
+        needDining,
+        giftPreparation,
         maskedPhone: maskPhone(contactPhone),
         status: appointment.status,
       };
     });
 
-    return NextResponse.json(result, { status: 201 });
+    sendWecomAppointmentNotification({
+      appointmentId: result.appointmentId,
+      appointmentNo: result.appointmentNo,
+      showroomName: result.showroomName,
+      visitDate: result.visitDate,
+      visitTimeSlot: result.visitTimeSlot,
+      visitorCount: result.visitorCount,
+      contactName: result.contactName,
+      companyName: result.companyName,
+      internalContactInfo: result.internalContactInfo,
+      customerLevel: result.customerLevel,
+      needVehicle: result.needVehicle,
+      needAccommodation: result.needAccommodation,
+      needDining: result.needDining,
+      giftPreparation: result.giftPreparation,
+      maskedPhone: result.maskedPhone,
+    }).catch((error) => {
+      console.error("WECOM_NOTIFY_FAILED", error);
+    });
+
+    return NextResponse.json(
+      {
+        appointmentNo: result.appointmentNo,
+        showroomName: result.showroomName,
+        visitDate: result.visitDate,
+        visitTimeSlot: result.visitTimeSlot,
+        contactName: result.contactName,
+        maskedPhone: result.maskedPhone,
+        status: result.status,
+      },
+      { status: 201 },
+    );
   } catch (error) {
     if (error instanceof Error && error.message === "SHOWROOM_NOT_FOUND") {
       return NextResponse.json({ error: "预约展厅不存在" }, { status: 404 });
