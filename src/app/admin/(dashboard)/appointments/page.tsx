@@ -1,12 +1,16 @@
 ﻿import Link from "next/link";
 import type { AppointmentStatus, Prisma } from "@prisma/client";
-import { CheckCircle2, ClipboardList, Clock, Download, Plus, Search, UsersRound } from "lucide-react";
+import { CheckCircle2, ClipboardList, Clock, UsersRound } from "lucide-react";
 import { AdminAppointmentDeleteButton } from "@/components/admin-appointment-delete-button";
+import { AdminAppointmentFilterForm } from "@/components/admin-appointment-filter-form";
+import { AdminBulkDeleteTable } from "@/components/admin-bulk-delete-table";
+import { AdminPagination } from "@/components/admin-pagination";
 import { AppointmentStatusBadge } from "@/components/appointment-status-badge";
 import { formatDate, formatDateTime, appointmentStatusLabels } from "@/lib/admin-appointments";
 import {
   getCustomerTypeLabel,
   getInterestAreaLabels,
+  getProvinceLabel,
   getSolutionConsultingLabel,
   getVisitTimeSlotLabel,
 } from "@/lib/appointments";
@@ -41,18 +45,6 @@ function isAppointmentStatus(value?: string): value is AppointmentStatus {
 function getDate(value?: string) {
   if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return null;
   return new Date(`${value}T00:00:00.000Z`);
-}
-
-function getPageHref(page: number, params: Awaited<AdminAppointmentsPageProps["searchParams"]>) {
-  const query = new URLSearchParams();
-  if (page > 1) query.set("page", String(page));
-  if (params.status) query.set("status", params.status);
-  if (params.showroomId) query.set("showroomId", params.showroomId);
-  if (params.startDate) query.set("startDate", params.startDate);
-  if (params.endDate) query.set("endDate", params.endDate);
-  if (params.keyword) query.set("keyword", params.keyword);
-  const text = query.toString();
-  return `/admin/appointments${text ? `?${text}` : ""}`;
 }
 
 function getExportHref(params: Awaited<AdminAppointmentsPageProps["searchParams"]>) {
@@ -131,16 +123,6 @@ export default async function AdminAppointmentsPage({ searchParams }: AdminAppoi
           <div className="rounded-md bg-white px-4 py-3 text-sm text-slate-600 shadow-sm">
             共 <span className="font-semibold text-slate-950">{total}</span> 条预约
           </div>
-          <div className="flex flex-col gap-2 sm:flex-row">
-            <Link href="/admin/appointments/new" className="inline-flex min-h-10 items-center justify-center gap-2 rounded-md bg-[#2563EB] px-4 py-2 text-sm font-semibold !text-white shadow-lg shadow-blue-900/15 ring-1 ring-blue-500/20 hover:bg-[#1D4ED8]">
-              <Plus className="h-4 w-4 text-white" />
-              <span className="text-white">新增预约</span>
-            </Link>
-            <Link href={getExportHref(params)} className="inline-flex min-h-10 items-center justify-center gap-2 rounded-md border border-blue-200 bg-white px-4 py-2 text-sm font-semibold text-blue-700 shadow-sm hover:bg-blue-50">
-              <Download className="h-4 w-4" />
-              按当前筛选导出 Excel
-            </Link>
-          </div>
         </div>
       </div>
 
@@ -151,36 +133,36 @@ export default async function AdminAppointmentsPage({ searchParams }: AdminAppoi
         <StatCard label="累计留资" value={leadCount} accent="bg-blue-600" icon={UsersRound} />
       </div>
 
-      <form className="admin-panel mt-6 grid gap-3 rounded-lg p-4 lg:grid-cols-6">
-        <select name="status" defaultValue={params.status || ""} className="form-control">
-          {statusOptions.map((option) => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </select>
-        <select name="showroomId" defaultValue={params.showroomId || ""} className="form-control">
-          <option value="">全部展厅</option>
-          {showrooms.map((showroom) => (
-            <option key={showroom.id} value={showroom.id}>
-              {showroom.name}
-            </option>
-          ))}
-        </select>
-        <input name="startDate" type="date" defaultValue={params.startDate || ""} className="form-control" />
-        <input name="endDate" type="date" defaultValue={params.endDate || ""} className="form-control" />
-        <input name="keyword" defaultValue={params.keyword || ""} placeholder="姓名 / 手机号 / 公司" className="form-control" />
-        <button className="inline-flex min-h-11 w-fit min-w-28 items-center justify-center gap-2 rounded-md bg-blue-600 px-5 py-2 text-sm font-semibold text-white hover:bg-blue-700">
-          <Search className="h-4 w-4" />
-          <span>查询</span>
-        </button>
-      </form>
+      <AdminAppointmentFilterForm
+        status={params.status || ""}
+        showroomId={params.showroomId || ""}
+        startDate={params.startDate || ""}
+        endDate={params.endDate || ""}
+        keyword={params.keyword || ""}
+        statusOptions={statusOptions}
+        showroomOptions={[
+          { value: "", label: "全部展厅" },
+          ...showrooms.map((showroom) => ({
+            value: String(showroom.id),
+            label: showroom.name,
+          })),
+        ]}
+      />
 
+      <AdminBulkDeleteTable
+        endpoint="/api/admin/appointments/bulk-delete"
+        itemName="预约"
+        toolbarVariant="appointments"
+        exportHref={getExportHref(params)}
+      >
       <div className="admin-panel mt-6 overflow-hidden rounded-lg">
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-slate-200 text-sm">
             <thead className="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
               <tr>
+                <th className="w-12 px-4 py-3">
+                  <input type="checkbox" data-bulk-delete-all aria-label="全选预约" className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500" />
+                </th>
                 <th className="px-4 py-3">预约编号</th>
                 <th className="px-4 py-3">展厅</th>
                 <th className="px-4 py-3">参观日期</th>
@@ -198,6 +180,9 @@ export default async function AdminAppointmentsPage({ searchParams }: AdminAppoi
             <tbody className="divide-y divide-slate-100">
               {appointments.map((appointment) => (
                 <tr key={appointment.id} className={appointment.status === "pending" ? "bg-amber-50/60" : "hover:bg-slate-50"}>
+                  <td className="whitespace-nowrap px-4 py-3">
+                    <input type="checkbox" value={appointment.id} data-bulk-delete-row aria-label={`选择预约 ${appointment.appointmentNo}`} className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500" />
+                  </td>
                   <td className="whitespace-nowrap px-4 py-3 font-semibold text-slate-950">{appointment.appointmentNo}</td>
                   <td className="whitespace-nowrap px-4 py-3 text-slate-600">{appointment.showroom.name}</td>
                   <td className="whitespace-nowrap px-4 py-3 text-slate-600">{formatDate(appointment.visitDate)}</td>
@@ -208,6 +193,7 @@ export default async function AdminAppointmentsPage({ searchParams }: AdminAppoi
                   <td className="min-w-64 px-4 py-3 text-slate-600">
                     <div className="space-y-1">
                       <p>类型：{getCustomerTypeLabel(appointment.customerType)}</p>
+                      <p>省份：{getProvinceLabel(appointment.province)}</p>
                       <p>关注：{getInterestAreaLabels(appointment.interestAreas)}</p>
                       <p>方案：{getSolutionConsultingLabel(appointment.needSolutionConsulting)} · 级别：{appointment.customerLevel || "-"}</p>
                     </div>
@@ -227,25 +213,16 @@ export default async function AdminAppointmentsPage({ searchParams }: AdminAppoi
               ))}
               {appointments.length === 0 ? (
                 <tr>
-                  <td colSpan={12} className="px-4 py-10 text-center text-slate-500">暂无预约数据</td>
+                  <td colSpan={13} className="px-4 py-10 text-center text-slate-500">暂无预约数据</td>
                 </tr>
               ) : null}
             </tbody>
           </table>
         </div>
       </div>
+      </AdminBulkDeleteTable>
 
-      <div className="mt-5 flex items-center justify-between text-sm text-slate-600">
-        <span>第 {page} / {pageCount} 页</span>
-        <div className="flex gap-2">
-          <Link href={getPageHref(Math.max(page - 1, 1), params)} className={`rounded-md border px-3 py-2 ${page <= 1 ? "pointer-events-none text-slate-300" : "text-slate-700 hover:bg-white"}`}>
-            上一页
-          </Link>
-          <Link href={getPageHref(Math.min(page + 1, pageCount), params)} className={`rounded-md border px-3 py-2 ${page >= pageCount ? "pointer-events-none text-slate-300" : "text-slate-700 hover:bg-white"}`}>
-            下一页
-          </Link>
-        </div>
-      </div>
+      <AdminPagination page={page} pageCount={pageCount} />
     </section>
   );
 }

@@ -3,6 +3,7 @@ import { appointmentStatusLabels, formatDate, formatDateTime } from "@/lib/admin
 import {
   getCustomerTypeLabel,
   getInterestAreaLabels,
+  getProvinceLabel,
   getSolutionConsultingLabel,
   getVisitTimeSlotLabel,
 } from "@/lib/appointments";
@@ -24,7 +25,7 @@ function getDate(value: string | null) {
 function getSimpleOptionLabel(value?: string | null) {
   if (value === "yes") return "是";
   if (value === "no") return "否";
-  if (value === "pending") return "待沟通";
+  if (value === "pending") return "待确认";
   return value || "-";
 }
 
@@ -79,21 +80,21 @@ export async function GET(request: Request) {
         "手机号",
         "公司名称",
         "职务",
-        "所属行业",
+        "所属省份",
         "内部对接人",
         "来访客户级别",
         "主要来访人员信息",
         "客户类型",
         "关注方向",
         "是否需要方案交流",
-        "车辆接送安排",
+        "是否需要车辆接送",
         "车辆接送具体要求",
-        "住宿安排",
+        "是否需要住宿安排",
         "住宿具体要求",
-        "宴请安排",
+        "是否需要宴请安排",
         "宴请具体要求",
-        "礼品准备",
-        "指定伴手礼说明",
+        "是否需要准备礼品",
+        "礼品具体要求",
         "参观人数",
         "是否需要接待讲解",
         "参观目的",
@@ -117,7 +118,7 @@ export async function GET(request: Request) {
         appointment.contactPhone,
         appointment.companyName,
         appointment.position,
-        appointment.industry,
+        getProvinceLabel(appointment.province),
         appointment.internalContactInfo,
         appointment.customerLevel,
         appointment.mainVisitorInfo,
@@ -130,10 +131,10 @@ export async function GET(request: Request) {
         appointment.accommodationRequirement,
         getSimpleOptionLabel(appointment.needDining),
         appointment.diningRequirement,
-        appointment.giftPreparation,
+        getSimpleOptionLabel(appointment.giftPreparation),
         appointment.giftRequirement,
         appointment.visitorCount,
-        appointment.needGuide ? "是" : "否",
+        getSimpleOptionLabel(appointment.needGuide ? "yes" : "no"),
         appointment.visitPurpose,
         appointment.customerRemark,
         appointmentStatusLabels[appointment.status],

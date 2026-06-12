@@ -92,11 +92,13 @@ model Appointment {
   companyName              String            @map("company_name")
   position                 String?
   industry                 String?
+  province                 String?
   customerType             String?           @map("customer_type")
   interestAreas            String?           @map("interest_areas")
   needSolutionConsulting   String?           @map("need_solution_consulting")
   visitPurpose             String?           @map("visit_purpose")
   needGuide                Boolean           @default(true) @map("need_guide")
+  needGuideStatus          String?           @map("need_guide_status")
   customerRemark           String?           @map("customer_remark")
   status                   AppointmentStatus @default(pending)
   approvalOpinion          String?           @map("approval_opinion")
@@ -141,6 +143,7 @@ model Lead {
   companyName            String        @map("company_name")
   position               String?
   industry               String?
+  province               String?
   customerType           String?       @map("customer_type")
   interestAreas          String?       @map("interest_areas")
   needSolutionConsulting String?       @map("need_solution_consulting")
@@ -156,4 +159,28 @@ model Lead {
 
   @@index([latestShowroomId])
   @@map("leads")
+}
+
+model Region {
+  id        Int              @id @default(autoincrement())
+  name      String           @unique
+  color     String           @default("#2563eb")
+  sortOrder Int              @default(0) @map("sort_order")
+  provinces ProvinceRegion[]
+  createdAt DateTime         @default(now()) @map("created_at")
+  updatedAt DateTime         @updatedAt @map("updated_at")
+
+  @@map("regions")
+}
+
+model ProvinceRegion {
+  id        Int      @id @default(autoincrement())
+  province  String   @unique
+  regionId  Int      @map("region_id")
+  region    Region   @relation(fields: [regionId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([regionId])
+  @@map("province_regions")
 }

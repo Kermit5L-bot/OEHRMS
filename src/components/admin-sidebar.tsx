@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BarChart3, Building2, CalendarCheck, UsersRound } from "lucide-react";
+import { BarChart3, Building2, CalendarCheck, MapPinned, UsersRound } from "lucide-react";
 import { BrandMark } from "@/components/brand-mark";
 
 const adminNavItems = [
@@ -10,13 +10,14 @@ const adminNavItems = [
   { href: "/admin/appointments", label: "预约管理", icon: CalendarCheck },
   { href: "/admin/leads", label: "留资管理", icon: UsersRound },
   { href: "/admin/showrooms", label: "展厅管理", icon: Building2 },
+  { href: "/admin/regions", label: "区域管理", icon: MapPinned },
 ];
 
 export function AdminSidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="relative overflow-hidden border-b border-cyan-300/15 bg-slate-950 px-4 py-4 text-white lg:min-h-screen lg:w-64 lg:border-b-0 lg:border-r lg:px-4 lg:py-6">
+    <aside className="relative overflow-hidden border-b border-cyan-300/15 bg-slate-950 px-4 py-4 text-white lg:sticky lg:top-0 lg:h-screen lg:w-64 lg:shrink-0 lg:self-start lg:border-b-0 lg:border-r lg:px-4 lg:py-6">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_18%_8%,rgba(56,189,248,0.24),transparent_14rem),linear-gradient(135deg,#020617_0%,#07111f_52%,#0b1220_100%)]" />
       <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(rgba(56,189,248,0.08)_1px,transparent_1px),linear-gradient(90deg,rgba(56,189,248,0.08)_1px,transparent_1px)] bg-[size:28px_28px] opacity-70" />
       <div className="relative z-10 px-1 py-2">

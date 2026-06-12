@@ -10,6 +10,7 @@ import {
   normalizeShowroomCoverSrc,
   type ShowroomStatusValue,
 } from "@/lib/showrooms";
+import { FormSelect } from "@/components/form-select";
 
 type AdminShowroomRecord = Omit<Showroom, "status"> & {
   status: ShowroomStatusValue;
@@ -35,6 +36,16 @@ type FormState = {
 
 const allowedImageTypes = ["image/jpeg", "image/png", "image/webp"];
 const maxImageSize = 5 * 1024 * 1024;
+const showroomTypeOptions = [
+  { value: "company", label: getShowroomTypeLabel("company") },
+  { value: "training_base", label: getShowroomTypeLabel("training_base") },
+];
+const showroomStatusOptions = [
+  { value: "open", label: getShowroomStatusLabel("open") },
+  { value: "closed", label: getShowroomStatusLabel("closed") },
+  { value: "hidden", label: getShowroomStatusLabel("hidden") },
+  { value: "deleted", label: getShowroomStatusLabel("deleted") },
+];
 
 function getInitialForm(showroom?: AdminShowroomRecord): FormState {
   return {
@@ -210,18 +221,18 @@ export function AdminShowroomEditForm({ showroom }: AdminShowroomEditFormProps) 
                   <input value={form.city} onChange={(event) => updateField("city", event.target.value)} className="form-control" required />
                 </Field>
                 <Field label="展厅类型" required>
-                  <select value={form.type} onChange={(event) => updateField("type", event.target.value as FormState["type"])} className="form-control">
-                    <option value="company">{getShowroomTypeLabel("company")}</option>
-                    <option value="training_base">{getShowroomTypeLabel("training_base")}</option>
-                  </select>
+                  <FormSelect
+                    value={form.type}
+                    onChange={(value) => updateField("type", value as FormState["type"])}
+                    options={showroomTypeOptions}
+                  />
                 </Field>
                 <Field label="展厅状态" required>
-                  <select value={form.status} onChange={(event) => updateField("status", event.target.value as ShowroomStatusValue)} className="form-control">
-                    <option value="open">{getShowroomStatusLabel("open")}</option>
-                    <option value="closed">{getShowroomStatusLabel("closed")}</option>
-                    <option value="hidden">{getShowroomStatusLabel("hidden")}</option>
-                    <option value="deleted">{getShowroomStatusLabel("deleted")}</option>
-                  </select>
+                  <FormSelect
+                    value={form.status}
+                    onChange={(value) => updateField("status", value as ShowroomStatusValue)}
+                    options={showroomStatusOptions}
+                  />
                 </Field>
                 <Field label="排序值">
                   <input type="number" value={form.sortOrder} onChange={(event) => updateField("sortOrder", event.target.value)} className="form-control" />

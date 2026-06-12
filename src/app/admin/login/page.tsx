@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 export default async function AdminLoginPage() {
   const currentUser = await getCurrentAdminUser();
   if (currentUser) {
-    redirect("/admin/appointments");
+    redirect("/admin/dashboard");
   }
 
   return (
@@ -22,9 +22,9 @@ export default async function AdminLoginPage() {
           </p>
         </div>
         <div className="p-8">
-        <h2 className="text-3xl font-bold text-slate-950">后台登录</h2>
-        <p className="mt-3 text-slate-600">请输入管理员账号和密码，进入展厅预约后台。</p>
-        <AdminLoginForm />
+          <h2 className="text-3xl font-bold text-slate-950">后台登录</h2>
+          <p className="mt-3 text-slate-600">请输入管理员账号和密码，进入展厅预约后台。</p>
+          <AdminLoginForm />
         </div>
       </section>
     </main>

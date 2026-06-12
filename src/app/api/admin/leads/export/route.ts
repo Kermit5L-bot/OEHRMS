@@ -1,6 +1,6 @@
 import type { Prisma } from "@prisma/client";
 import { formatDateTime } from "@/lib/admin-appointments";
-import { getCustomerTypeLabel, getInterestAreaLabels, getSolutionConsultingLabel } from "@/lib/appointments";
+import { getCustomerTypeLabel, getInterestAreaLabels, getProvinceLabel, getSolutionConsultingLabel } from "@/lib/appointments";
 import { getCurrentAdminUser } from "@/lib/auth";
 import { createExcelResponse } from "@/lib/excel-export";
 import { prisma } from "@/lib/prisma";
@@ -40,7 +40,7 @@ export async function GET(request: Request) {
         "手机号",
         "公司名称",
         "职务",
-        "所属行业",
+        "所属省份",
         "客户类型",
         "关注方向",
         "是否需要方案交流",
@@ -56,7 +56,7 @@ export async function GET(request: Request) {
         lead.contactPhone,
         lead.companyName,
         lead.position,
-        lead.industry,
+        getProvinceLabel(lead.province),
         getCustomerTypeLabel(lead.customerType),
         getInterestAreaLabels(lead.interestAreas),
         getSolutionConsultingLabel(lead.needSolutionConsulting),

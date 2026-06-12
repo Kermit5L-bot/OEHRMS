@@ -3,23 +3,12 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type { AppointmentStatus } from "@prisma/client";
-import { CheckCircle2, ClipboardCheck, FileCheck2, Save, XCircle } from "lucide-react";
-
-type InternalReceptionState = {
-  receptionist: string;
-  receptionNote: string;
-  followUpNote: string;
-  visitStartTime: string;
-  visitEndTime: string;
-  actualReceptionLocation: string;
-  receptionScheduleNote: string;
-  receptionPreparationNote: string;
-};
+import { CheckCircle2, ClipboardCheck, FileCheck2, XCircle } from "lucide-react";
+import { AppointmentStatusBadge } from "@/components/appointment-status-badge";
 
 type AdminAppointmentActionsProps = {
   appointmentId: number;
   status: AppointmentStatus;
-  initialReception: InternalReceptionState;
 };
 
 type ActionMessage = {
@@ -27,28 +16,15 @@ type ActionMessage = {
   text: string;
 };
 
-const schedulePlaceholder = [
-  "讲师：王老师｜内容：公司介绍｜时间：09:30-10:00｜地点：展厅入口",
-  "讲师：李老师｜内容：产品方案讲解｜时间：10:00-10:40｜地点：智慧环保展区",
-  "讲师：张老师｜内容：实训基地介绍｜时间：10:40-11:10｜地点：会议室",
-].join("\n");
+type ActiveDialog = "approve" | "reject" | null;
 
-export function AdminAppointmentActions({
-  appointmentId,
-  status,
-  initialReception,
-}: AdminAppointmentActionsProps) {
+export function AdminAppointmentActions({ appointmentId, status }: AdminAppointmentActionsProps) {
   const router = useRouter();
   const [approvalOpinion, setApprovalOpinion] = useState("");
   const [rejectReason, setRejectReason] = useState("");
-  const [reception, setReception] = useState<InternalReceptionState>(initialReception);
+  const [activeDialog, setActiveDialog] = useState<ActiveDialog>(null);
   const [isSubmitting, setIsSubmitting] = useState<string | null>(null);
   const [message, setMessage] = useState<ActionMessage | null>(null);
-
-  function updateReception<K extends keyof InternalReceptionState>(field: K, value: InternalReceptionState[K]) {
-    setReception((current) => ({ ...current, [field]: value }));
-    setMessage(null);
-  }
 
   async function postAction(path: string, body?: object) {
     setIsSubmitting(path);
@@ -69,6 +45,7 @@ export function AdminAppointmentActions({
       }
 
       setMessage({ type: "success", text: "操作成功" });
+      setActiveDialog(null);
       router.refresh();
       return true;
     } catch {
@@ -82,155 +59,167 @@ export function AdminAppointmentActions({
   const canApprove = status === "pending";
   const canReject = status === "pending";
   const canComplete = status === "approved";
-  const canEditNote = status !== "cancelled";
+  const hasAction = canApprove || canReject || canComplete;
 
   return (
-    <div className="space-y-6">
-      {message ? (
-        <div className={`rounded-md px-4 py-3 text-sm font-medium ${message.type === "success" ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-700"}`}>
-          {message.text}
+    <>
+      <div className="fixed inset-x-0 bottom-0 z-50 border-t border-blue-100 bg-white/95 shadow-[0_-12px_30px_rgba(15,23,42,0.10)] backdrop-blur lg:left-64">
+        <div className="mx-auto flex max-w-7xl flex-col gap-2 px-4 py-3 sm:px-6 lg:flex-row lg:items-center lg:justify-between lg:px-8">
+          <div className="flex flex-wrap items-center gap-3">
+            <span className="inline-flex items-center gap-2 text-sm font-bold text-slate-950">
+              <ClipboardCheck className="h-4 w-4 text-blue-600" />
+              审批操作
+            </span>
+            <AppointmentStatusBadge status={status} />
+            {message ? (
+              <span className={`rounded-md px-3 py-1.5 text-sm font-medium ${message.type === "success" ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-700"}`}>
+                {message.text}
+              </span>
+            ) : null}
+            {!hasAction ? <span className="text-sm text-slate-500">当前状态无可执行审批操作</span> : null}
+          </div>
+
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+            {canApprove ? (
+              <button
+                type="button"
+                disabled={isSubmitting !== null}
+                onClick={() => setActiveDialog("approve")}
+                className="inline-flex min-h-10 items-center justify-center gap-2 rounded-md bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-slate-300"
+              >
+                <CheckCircle2 className="h-4 w-4" />
+                通过预约
+              </button>
+            ) : null}
+            {canReject ? (
+              <button
+                type="button"
+                disabled={isSubmitting !== null}
+                onClick={() => setActiveDialog("reject")}
+                className="inline-flex min-h-10 items-center justify-center gap-2 rounded-md bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:bg-slate-300"
+              >
+                <XCircle className="h-4 w-4" />
+                拒绝预约
+              </button>
+            ) : null}
+            {canComplete ? (
+              <button
+                type="button"
+                disabled={isSubmitting !== null}
+                onClick={() => postAction(`/api/admin/appointments/${appointmentId}/complete`)}
+                className="inline-flex min-h-10 items-center justify-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-slate-300"
+              >
+                <FileCheck2 className="h-4 w-4" />
+                {isSubmitting?.includes("complete") ? "提交中..." : "标记已完成"}
+              </button>
+            ) : null}
+          </div>
         </div>
+      </div>
+
+      {activeDialog === "approve" ? (
+        <ActionDialog
+          title="通过预约"
+          description="审批意见为选填，填写后会保存到该预约的审批信息中。"
+          label="审批意见"
+          value={approvalOpinion}
+          placeholder="可填写审批意见，例如接待安排或注意事项"
+          confirmText={isSubmitting?.includes("approve") ? "提交中..." : "确定通过"}
+          confirmClassName="bg-emerald-600 hover:bg-emerald-700"
+          disabled={isSubmitting !== null}
+          onChange={setApprovalOpinion}
+          onCancel={() => setActiveDialog(null)}
+          onConfirm={() => postAction(`/api/admin/appointments/${appointmentId}/approve`, { approvalOpinion })}
+        />
       ) : null}
 
-      <section className="admin-panel rounded-lg p-6">
-        <h2 className="inline-flex items-center gap-2 text-lg font-bold text-slate-950">
-          <ClipboardCheck className="h-5 w-5 text-blue-600" />
-          审批操作
-        </h2>
-        <div className="mt-4 grid gap-4">
-          <label className="block">
-            <span className="text-sm font-medium text-slate-700">审批意见</span>
-            <textarea value={approvalOpinion} onChange={(event) => setApprovalOpinion(event.target.value)} disabled={!canApprove} className="form-control mt-2 min-h-24" placeholder="通过时可填写审批意见" />
-          </label>
-          <div className="grid gap-3 sm:grid-cols-2">
-            <button
-              type="button"
-              disabled={!canApprove || isSubmitting !== null}
-              onClick={() => postAction(`/api/admin/appointments/${appointmentId}/approve`, { approvalOpinion, receptionist: reception.receptionist, receptionNote: reception.receptionNote })}
-              className="min-h-11 rounded-md bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-slate-300"
-            >
-              <CheckCircle2 className="mr-2 inline h-4 w-4 align-[-2px]" />
-              {isSubmitting?.includes("approve") ? "提交中..." : "通过预约"}
-            </button>
-            <button
-              type="button"
-              disabled={!canComplete || isSubmitting !== null}
-              onClick={() => postAction(`/api/admin/appointments/${appointmentId}/complete`)}
-              className="min-h-11 rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-slate-300"
-            >
-              <FileCheck2 className="mr-2 inline h-4 w-4 align-[-2px]" />
-              {isSubmitting?.includes("complete") ? "提交中..." : "标记已完成"}
-            </button>
-          </div>
-        </div>
-      </section>
+      {activeDialog === "reject" ? (
+        <ActionDialog
+          title="拒绝预约"
+          description="拒绝原因必填，保存后会显示在预约详情的审批信息中。"
+          label="拒绝原因"
+          value={rejectReason}
+          placeholder="请填写拒绝原因"
+          confirmText={isSubmitting?.includes("reject") ? "提交中..." : "确定拒绝"}
+          confirmClassName="bg-red-600 hover:bg-red-700"
+          disabled={isSubmitting !== null}
+          required
+          onChange={setRejectReason}
+          onCancel={() => setActiveDialog(null)}
+          onConfirm={() => postAction(`/api/admin/appointments/${appointmentId}/reject`, { rejectReason })}
+        />
+      ) : null}
+    </>
+  );
+}
 
-      <section className="admin-panel rounded-lg p-6">
-        <h2 className="inline-flex items-center gap-2 text-lg font-bold text-slate-950">
-          <XCircle className="h-5 w-5 text-red-600" />
-          拒绝预约
-        </h2>
-        <label className="mt-4 block">
-          <span className="text-sm font-medium text-slate-700">拒绝原因</span>
-          <textarea value={rejectReason} onChange={(event) => setRejectReason(event.target.value)} disabled={!canReject} className="form-control mt-2 min-h-24" placeholder="拒绝预约时必须填写原因" />
+function ActionDialog({
+  title,
+  description,
+  label,
+  value,
+  placeholder,
+  confirmText,
+  confirmClassName,
+  disabled,
+  required,
+  onChange,
+  onCancel,
+  onConfirm,
+}: {
+  title: string;
+  description: string;
+  label: string;
+  value: string;
+  placeholder: string;
+  confirmText: string;
+  confirmClassName: string;
+  disabled: boolean;
+  required?: boolean;
+  onChange: (value: string) => void;
+  onCancel: () => void;
+  onConfirm: () => void;
+}) {
+  const isConfirmDisabled = disabled || (required && !value.trim());
+
+  return (
+    <div className="fixed inset-0 z-[60] flex items-end justify-center bg-slate-950/35 px-4 py-6 sm:items-center">
+      <div className="w-full max-w-lg rounded-lg bg-white p-6 shadow-2xl">
+        <div>
+          <h2 className="text-lg font-bold text-slate-950">{title}</h2>
+          <p className="mt-2 text-sm text-slate-500">{description}</p>
+        </div>
+        <label className="mt-5 block">
+          <span className="text-sm font-semibold text-slate-700">
+            {label}
+            {required ? <span className="text-red-500"> *</span> : null}
+          </span>
+          <textarea
+            value={value}
+            onChange={(event) => onChange(event.target.value)}
+            className="form-control mt-2 min-h-28 resize-y"
+            placeholder={placeholder}
+          />
         </label>
-        <button
-          type="button"
-          disabled={!canReject || isSubmitting !== null}
-          onClick={() => postAction(`/api/admin/appointments/${appointmentId}/reject`, { rejectReason })}
-          className="mt-4 min-h-11 rounded-md bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:bg-slate-300"
-        >
-          <XCircle className="mr-2 inline h-4 w-4 align-[-2px]" />
-          {isSubmitting?.includes("reject") ? "提交中..." : "拒绝预约"}
-        </button>
-      </section>
-
-      <section className="admin-panel rounded-lg p-6">
-        <h2 className="inline-flex items-center gap-2 text-lg font-bold text-slate-950">
-          <Save className="h-5 w-5 text-blue-600" />
-          内部接待安排
-        </h2>
-        <div className="mt-4 grid gap-4">
-          <div className="grid gap-4 sm:grid-cols-2">
-            <TextInput label="来访开始时间" type="datetime-local" value={reception.visitStartTime} disabled={!canEditNote} onChange={(value) => updateReception("visitStartTime", value)} />
-            <TextInput label="离开时间" type="datetime-local" value={reception.visitEndTime} disabled={!canEditNote} onChange={(value) => updateReception("visitEndTime", value)} />
-          </div>
-          <TextInput label="实际接待地点" value={reception.actualReceptionLocation} disabled={!canEditNote} onChange={(value) => updateReception("actualReceptionLocation", value)} />
-          <TextArea label="接待准备事项" value={reception.receptionPreparationNote} disabled={!canEditNote} onChange={(value) => updateReception("receptionPreparationNote", value)} />
-          <TextArea label="接待讲解安排" value={reception.receptionScheduleNote} disabled={!canEditNote} onChange={(value) => updateReception("receptionScheduleNote", value)} placeholder={schedulePlaceholder} tall />
-        </div>
-      </section>
-
-      <section className="admin-panel rounded-lg p-6">
-        <h2 className="inline-flex items-center gap-2 text-lg font-bold text-slate-950">
-          <Save className="h-5 w-5 text-blue-600" />
-          接待备注与跟进
-        </h2>
-        <div className="mt-4 grid gap-4">
-          <TextInput label="接待负责人" value={reception.receptionist} disabled={!canEditNote} onChange={(value) => updateReception("receptionist", value)} />
-          <TextArea label="接待备注" value={reception.receptionNote} disabled={!canEditNote} onChange={(value) => updateReception("receptionNote", value)} />
-          <TextArea label="后续跟进记录" value={reception.followUpNote} disabled={!canEditNote} onChange={(value) => updateReception("followUpNote", value)} />
+        <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
           <button
             type="button"
-            disabled={!canEditNote || isSubmitting !== null}
-            onClick={() => postAction(`/api/admin/appointments/${appointmentId}/reception-note`, reception)}
-            className="min-h-11 w-full rounded-md bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-300 sm:w-fit"
+            disabled={disabled}
+            onClick={onCancel}
+            className="inline-flex min-h-10 items-center justify-center rounded-md border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            <Save className="mr-2 inline h-4 w-4 align-[-2px]" />
-            {isSubmitting?.includes("reception-note") ? "保存中..." : "保存接待安排"}
+            取消
+          </button>
+          <button
+            type="button"
+            disabled={isConfirmDisabled}
+            onClick={onConfirm}
+            className={`inline-flex min-h-10 items-center justify-center rounded-md px-4 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:bg-slate-300 ${confirmClassName}`}
+          >
+            {confirmText}
           </button>
         </div>
-      </section>
+      </div>
     </div>
-  );
-}
-
-function TextInput({
-  label,
-  value,
-  disabled,
-  onChange,
-  type = "text",
-}: {
-  label: string;
-  value: string;
-  disabled: boolean;
-  onChange: (value: string) => void;
-  type?: string;
-}) {
-  return (
-    <label className="block">
-      <span className="text-sm font-medium text-slate-700">{label}</span>
-      <input type={type} value={value} onChange={(event) => onChange(event.target.value)} disabled={disabled} className="form-control mt-2" />
-    </label>
-  );
-}
-
-function TextArea({
-  label,
-  value,
-  disabled,
-  onChange,
-  placeholder,
-  tall,
-}: {
-  label: string;
-  value: string;
-  disabled: boolean;
-  onChange: (value: string) => void;
-  placeholder?: string;
-  tall?: boolean;
-}) {
-  return (
-    <label className="block">
-      <span className="text-sm font-medium text-slate-700">{label}</span>
-      <textarea
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        disabled={disabled}
-        className={`form-control mt-2 ${tall ? "min-h-40" : "min-h-24"}`}
-        placeholder={placeholder}
-      />
-    </label>
   );
 }

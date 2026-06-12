@@ -47,19 +47,19 @@ export default async function HomePage() {
 
   return (
     <div className="tech-grid">
-      <section className="relative mx-auto grid max-w-6xl gap-10 px-4 py-12 sm:py-16 lg:grid-cols-[1.08fr_0.92fr] lg:items-center">
-        <div className="relative z-10">
-          <p className="inline-flex items-center gap-2.5 rounded-full border border-cyan-300/25 bg-cyan-300/12 px-5 py-2.5 text-base font-semibold tracking-wide text-cyan-100 shadow-lg shadow-cyan-950/20">
-            <Sparkles className="h-5 w-5" />
+      <section className="relative mx-auto grid max-w-6xl gap-8 px-4 py-8 sm:gap-10 sm:py-16 lg:grid-cols-[1.08fr_0.92fr] lg:items-center">
+        <div className="relative z-10 rounded-2xl border border-cyan-300/14 bg-slate-950/42 p-4 shadow-2xl shadow-slate-950/30 backdrop-blur-md sm:border-0 sm:bg-transparent sm:p-0 sm:shadow-none sm:backdrop-blur-0">
+          <p className="inline-flex items-center gap-2 rounded-full border border-cyan-300/25 bg-cyan-300/12 px-4 py-2 text-sm font-semibold tracking-wide text-cyan-100 shadow-lg shadow-cyan-950/20 sm:gap-2.5 sm:px-5 sm:py-2.5 sm:text-base">
+            <Sparkles className="h-4.5 w-4.5 sm:h-5 sm:w-5" />
             智慧预约&nbsp;&nbsp;·&nbsp;&nbsp;智享展厅
           </p>
-          <h1 className="mt-5 max-w-3xl bg-gradient-to-r from-white via-cyan-200 to-blue-400 bg-clip-text text-4xl font-bold leading-tight text-transparent sm:text-5xl">
+          <h1 className="mt-4 max-w-3xl bg-gradient-to-r from-white via-white to-cyan-200 bg-clip-text text-[2.55rem] font-bold leading-[1.08] text-transparent drop-shadow-[0_8px_24px_rgba(0,0,0,0.65)] sm:mt-5 sm:bg-gradient-to-r sm:from-white sm:via-cyan-200 sm:to-blue-400 sm:text-5xl sm:leading-tight sm:drop-shadow-none">
             万维盈创智慧展厅预约
           </h1>
-          <p className="mt-4 max-w-2xl text-base leading-7 text-slate-300 sm:text-lg">
+          <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-200 sm:mt-4 sm:text-lg sm:leading-7 sm:text-slate-300">
             面向客户接待、展厅参观、实训基地交流的一站式数字化平台
           </p>
-          <div className="mt-6 grid max-w-[470px] gap-3 sm:grid-cols-2">
+          <div className="mt-5 grid max-w-[470px] gap-3 sm:mt-6 sm:grid-cols-2">
             <Link
               href="/appointment"
               className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-md bg-blue-600 px-8 py-3 text-center text-sm font-semibold text-white shadow-xl shadow-blue-950/40 hover:bg-blue-500"
@@ -75,12 +75,12 @@ export default async function HomePage() {
               查看展厅
             </Link>
           </div>
-          <div className="mt-6 flex max-w-[470px] flex-wrap items-center gap-x-6 gap-y-3">
+          <div className="mt-5 flex max-w-[470px] flex-wrap items-center gap-x-4 gap-y-2 sm:mt-6 sm:gap-x-6 sm:gap-y-3">
             {productSignals.map((item) => {
               const SignalIcon = item.icon;
               return (
-              <div key={item.label} className="inline-flex items-center gap-2 border-r border-cyan-300/25 pr-6 text-sm font-semibold text-slate-100 last:border-r-0 last:pr-0">
-                <SignalIcon className="h-4 w-4 text-cyan-200" />
+              <div key={item.label} className="inline-flex items-center gap-1.5 border-r border-cyan-300/25 pr-4 text-xs font-semibold text-slate-100 last:border-r-0 last:pr-0 sm:gap-2 sm:pr-6 sm:text-sm">
+                <SignalIcon className="h-3.5 w-3.5 text-cyan-200 sm:h-4 sm:w-4" />
                 {item.label}
               </div>
               );

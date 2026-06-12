@@ -10,18 +10,68 @@ type LoginErrors = {
   submit?: string;
 };
 
+const REMEMBER_PASSWORD_KEY = "oehrms.admin.rememberPassword";
+
+type RememberedLogin = {
+  username: string;
+  password: string;
+};
+
+type LoginDraft = RememberedLogin & {
+  rememberPassword: boolean;
+};
+
+function readRememberedLogin(): RememberedLogin | null {
+  if (typeof window === "undefined") return null;
+
+  try {
+    const raw = window.localStorage.getItem(REMEMBER_PASSWORD_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as Partial<RememberedLogin>;
+    if (typeof parsed.username !== "string" || typeof parsed.password !== "string") return null;
+    return {
+      username: parsed.username,
+      password: parsed.password,
+    };
+  } catch {
+    return null;
+  }
+}
+
 export function AdminLoginForm() {
   const router = useRouter();
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
+  const [loginDraft, setLoginDraft] = useState<LoginDraft>(() => {
+    const remembered = readRememberedLogin();
+    return {
+      username: remembered?.username ?? "",
+      password: remembered?.password ?? "",
+      rememberPassword: Boolean(remembered),
+    };
+  });
   const [errors, setErrors] = useState<LoginErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { username, password, rememberPassword } = loginDraft;
 
   function validate() {
     const nextErrors: LoginErrors = {};
     if (!username.trim()) nextErrors.username = "请输入用户名";
     if (!password) nextErrors.password = "请输入密码";
     return nextErrors;
+  }
+
+  function syncRememberedLogin() {
+    if (rememberPassword) {
+      window.localStorage.setItem(
+        REMEMBER_PASSWORD_KEY,
+        JSON.stringify({
+          username: username.trim(),
+          password,
+        }),
+      );
+      return;
+    }
+
+    window.localStorage.removeItem(REMEMBER_PASSWORD_KEY);
   }
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -40,7 +90,7 @@ export function AdminLoginForm() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          username,
+          username: username.trim(),
           password,
         }),
       });
@@ -51,7 +101,8 @@ export function AdminLoginForm() {
         return;
       }
 
-      router.push("/admin/appointments");
+      syncRememberedLogin();
+      router.push("/admin/dashboard");
       router.refresh();
     } catch {
       setErrors({ submit: "登录失败，请稍后重试" });
@@ -67,7 +118,7 @@ export function AdminLoginForm() {
         <input
           value={username}
           onChange={(event) => {
-            setUsername(event.target.value);
+            setLoginDraft((current) => ({ ...current, username: event.target.value }));
             setErrors((current) => ({ ...current, username: undefined, submit: undefined }));
           }}
           className="form-control mt-2"
@@ -83,7 +134,7 @@ export function AdminLoginForm() {
           type="password"
           value={password}
           onChange={(event) => {
-            setPassword(event.target.value);
+            setLoginDraft((current) => ({ ...current, password: event.target.value }));
             setErrors((current) => ({ ...current, password: undefined, submit: undefined }));
           }}
           className="form-control mt-2"
@@ -91,6 +142,19 @@ export function AdminLoginForm() {
           autoComplete="current-password"
         />
         {errors.password ? <span className="mt-1 block text-xs text-red-600">{errors.password}</span> : null}
+      </label>
+
+      <label className="flex items-start gap-2 rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700">
+        <input
+          type="checkbox"
+          checked={rememberPassword}
+          onChange={(event) => setLoginDraft((current) => ({ ...current, rememberPassword: event.target.checked }))}
+          className="mt-0.5 h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+        />
+        <span>
+          <span className="font-medium text-slate-800">记住密码</span>
+          <span className="ml-2 text-xs text-slate-500">仅保存在当前浏览器本地</span>
+        </span>
       </label>
 
       {errors.submit ? <p className="text-sm font-medium text-red-600">{errors.submit}</p> : null}

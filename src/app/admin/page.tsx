@@ -9,5 +9,5 @@ export default async function AdminIndexPage() {
     redirect("/admin/login");
   }
 
-  redirect("/admin/appointments");
+  redirect("/admin/dashboard");
 }

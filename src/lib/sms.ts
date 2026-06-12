@@ -8,6 +8,8 @@ type AppointmentApprovedSms = {
   timeSlot: string;
 };
 
+type AppointmentSubmittedSms = AppointmentApprovedSms;
+
 type AliyunSmsResponse = {
   Code?: string;
   Message?: string;
@@ -16,10 +18,17 @@ type AliyunSmsResponse = {
 };
 
 function getRequiredAliyunSmsConfig() {
+  return getAliyunSmsConfig(process.env.ALIYUN_SMS_TEMPLATE_APPOINTMENT_APPROVED?.trim());
+}
+
+function getRequiredAliyunSubmittedSmsConfig() {
+  return getAliyunSmsConfig(process.env.ALIYUN_SMS_TEMPLATE_APPOINTMENT_SUBMITTED?.trim());
+}
+
+function getAliyunSmsConfig(templateCode?: string) {
   const accessKeyId = process.env.ALIYUN_SMS_ACCESS_KEY_ID?.trim();
   const accessKeySecret = process.env.ALIYUN_SMS_ACCESS_KEY_SECRET?.trim();
   const signName = process.env.ALIYUN_SMS_SIGN_NAME?.trim();
-  const templateCode = process.env.ALIYUN_SMS_TEMPLATE_APPOINTMENT_APPROVED?.trim();
 
   if (!accessKeyId || !accessKeySecret || !signName || !templateCode) {
     return null;
@@ -80,10 +89,9 @@ function buildSignedBody(params: Record<string, string>, accessKeySecret: string
   }).toString();
 }
 
-export async function sendAppointmentApprovedSms(params: AppointmentApprovedSms) {
-  const config = getRequiredAliyunSmsConfig();
+async function sendAppointmentSms(params: AppointmentApprovedSms, config: ReturnType<typeof getAliyunSmsConfig>, skippedMessage: string) {
   if (!config) {
-    console.info("SMS_SEND_SKIPPED: Aliyun SMS config is not complete");
+    console.info(skippedMessage);
     return;
   }
 
@@ -125,4 +133,12 @@ export async function sendAppointmentApprovedSms(params: AppointmentApprovedSms)
   if (result.Code !== "OK") {
     throw new Error(`Aliyun SMS rejected message: ${result.Code || "UNKNOWN"} ${result.Message || ""}`.trim());
   }
+}
+
+export async function sendAppointmentApprovedSms(params: AppointmentApprovedSms) {
+  return sendAppointmentSms(params, getRequiredAliyunSmsConfig(), "SMS_SEND_SKIPPED: Aliyun approved SMS config is not complete");
+}
+
+export async function sendAppointmentSubmittedSms(params: AppointmentSubmittedSms) {
+  return sendAppointmentSms(params, getRequiredAliyunSubmittedSmsConfig(), "SMS_SEND_SKIPPED: Aliyun submitted SMS config is not complete");
 }

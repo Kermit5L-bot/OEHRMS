@@ -1,12 +1,15 @@
 import Link from "next/link";
 import type { Prisma } from "@prisma/client";
 import { Download, MessageSquareText, Search, UserRound } from "lucide-react";
+import { AdminBulkDeleteTable } from "@/components/admin-bulk-delete-table";
 import { AdminLeadNoteForm } from "@/components/admin-lead-note-form";
+import { AdminPagination } from "@/components/admin-pagination";
 import { AppointmentStatusBadge } from "@/components/appointment-status-badge";
 import { formatDate, formatDateTime } from "@/lib/admin-appointments";
 import {
   getCustomerTypeLabel,
   getInterestAreaLabels,
+  getProvinceLabel,
   getSolutionConsultingLabel,
   getVisitTimeSlotLabel,
 } from "@/lib/appointments";
@@ -21,14 +24,6 @@ type AdminLeadsPageProps = {
     phone?: string;
   }>;
 };
-
-function getPageHref(page: number, keyword?: string) {
-  const query = new URLSearchParams();
-  if (page > 1) query.set("page", String(page));
-  if (keyword) query.set("keyword", keyword);
-  const text = query.toString();
-  return `/admin/leads${text ? `?${text}` : ""}`;
-}
 
 function getExportHref(keyword?: string) {
   const query = new URLSearchParams();
@@ -113,16 +108,20 @@ export default async function AdminLeadsPage({ searchParams }: AdminLeadsPagePro
         ) : null}
       </form>
 
+      <AdminBulkDeleteTable endpoint="/api/admin/leads/bulk-delete" itemName="留资">
       <div className="admin-panel mt-6 overflow-hidden rounded-lg">
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-slate-200 text-sm">
             <thead className="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
               <tr>
+                <th className="w-12 px-4 py-3">
+                  <input type="checkbox" data-bulk-delete-all aria-label="全选留资" className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500" />
+                </th>
                 <th className="px-4 py-3">客户姓名</th>
                 <th className="px-4 py-3">手机号</th>
                 <th className="px-4 py-3">公司名称</th>
                 <th className="px-4 py-3">职务</th>
-                <th className="px-4 py-3">所属行业</th>
+                <th className="px-4 py-3">所属省份</th>
                 <th className="px-4 py-3">线索画像</th>
                 <th className="px-4 py-3">最近预约展厅</th>
                 <th className="px-4 py-3">最近预约时间</th>
@@ -135,6 +134,9 @@ export default async function AdminLeadsPage({ searchParams }: AdminLeadsPagePro
             <tbody className="divide-y divide-slate-100">
               {leads.map((lead) => (
                 <tr key={lead.id} className="hover:bg-slate-50">
+                  <td className="whitespace-nowrap px-4 py-3">
+                    <input type="checkbox" value={lead.id} data-bulk-delete-row aria-label={`选择留资 ${lead.contactName}`} className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500" />
+                  </td>
                   <td className="whitespace-nowrap px-4 py-3 font-semibold text-slate-950">
                     <span className="inline-flex items-center gap-2">
                       <UserRound className="h-4 w-4 text-blue-600" />
@@ -144,7 +146,7 @@ export default async function AdminLeadsPage({ searchParams }: AdminLeadsPagePro
                   <td className="whitespace-nowrap px-4 py-3 text-slate-600">{lead.contactPhone}</td>
                   <td className="min-w-40 px-4 py-3 text-slate-600">{lead.companyName}</td>
                   <td className="whitespace-nowrap px-4 py-3 text-slate-600">{lead.position || "-"}</td>
-                  <td className="whitespace-nowrap px-4 py-3 text-slate-600">{lead.industry || "-"}</td>
+                  <td className="whitespace-nowrap px-4 py-3 text-slate-600">{getProvinceLabel(lead.province)}</td>
                   <td className="min-w-64 px-4 py-3 text-slate-600">
                     <div className="space-y-1">
                       <p>类型：{getCustomerTypeLabel(lead.customerType)}</p>
@@ -176,14 +178,9 @@ export default async function AdminLeadsPage({ searchParams }: AdminLeadsPagePro
           </table>
         </div>
       </div>
+      </AdminBulkDeleteTable>
 
-      <div className="mt-5 flex items-center justify-between text-sm text-slate-600">
-        <span>第 {page} / {pageCount} 页</span>
-        <div className="flex gap-2">
-          <Link href={getPageHref(Math.max(page - 1, 1), keyword)} className={`rounded-md border px-3 py-2 ${page <= 1 ? "pointer-events-none text-slate-300" : "text-slate-700 hover:bg-white"}`}>上一页</Link>
-          <Link href={getPageHref(Math.min(page + 1, pageCount), keyword)} className={`rounded-md border px-3 py-2 ${page >= pageCount ? "pointer-events-none text-slate-300" : "text-slate-700 hover:bg-white"}`}>下一页</Link>
-        </div>
-      </div>
+      <AdminPagination page={page} pageCount={pageCount} />
 
       {selectedPhone ? (
         <section id="appointment-records" className="admin-panel mt-8 scroll-mt-6 rounded-lg p-6">

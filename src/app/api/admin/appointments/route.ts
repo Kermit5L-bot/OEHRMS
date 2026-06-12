@@ -7,6 +7,7 @@ import {
   formatDateForAppointmentNo,
   getTodayDateString,
   isValidCustomerType,
+  isValidProvince,
   isValidSolutionConsulting,
   isValidVisitTimeSlot,
   normalizeInterestAreas,
@@ -36,7 +37,7 @@ type AppointmentPayload = {
   internalContactInfo?: unknown;
   customerLevel?: unknown;
   mainVisitorInfo?: unknown;
-  industry?: unknown;
+  province?: unknown;
   customerType?: unknown;
   interestAreas?: unknown;
   needSolutionConsulting?: unknown;
@@ -61,6 +62,12 @@ function trimOptional(value: unknown) {
 
 function trimRequired(value: unknown) {
   return typeof value === "string" ? value.trim() : "";
+}
+
+function parseRequestStatus(value: unknown) {
+  if (typeof value === "boolean") return value ? "yes" : "no";
+  if (value === "yes" || value === "no" || value === "pending") return value;
+  return "pending";
 }
 
 function getVisitDate(value: unknown) {
@@ -175,7 +182,7 @@ export async function POST(request: Request) {
   const internalContactInfo = trimOptional(payload.internalContactInfo);
   const customerLevel = trimOptional(payload.customerLevel);
   const mainVisitorInfo = trimOptional(payload.mainVisitorInfo);
-  const industry = trimOptional(payload.industry);
+  const province = isValidProvince(payload.province) ? payload.province : null;
   const customerType = isValidCustomerType(payload.customerType) ? payload.customerType : null;
   const interestAreas = normalizeInterestAreas(payload.interestAreas);
   const needSolutionConsulting = isValidSolutionConsulting(payload.needSolutionConsulting)
@@ -191,7 +198,8 @@ export async function POST(request: Request) {
   const giftRequirement = trimOptional(payload.giftRequirement);
   const visitPurpose = trimOptional(payload.visitPurpose);
   const customerRemark = trimOptional(payload.customerRemark);
-  const needGuide = typeof payload.needGuide === "boolean" ? payload.needGuide : true;
+  const needGuideStatus = parseRequestStatus(payload.needGuide);
+  const needGuide = needGuideStatus === "no" ? false : true;
 
   if (!Number.isInteger(showroomId) || showroomId <= 0) {
     return NextResponse.json({ error: "请选择预约展厅" }, { status: 400 });
@@ -216,6 +224,18 @@ export async function POST(request: Request) {
   }
   if (!companyName) {
     return NextResponse.json({ error: "请填写公司名称" }, { status: 400 });
+  }
+  if (!internalContactInfo) {
+    return NextResponse.json({ error: "请填写内部对接人" }, { status: 400 });
+  }
+  if (!province) {
+    return NextResponse.json({ error: "请选择所属省份" }, { status: 400 });
+  }
+  if (!customerType) {
+    return NextResponse.json({ error: "请选择客户类型" }, { status: 400 });
+  }
+  if (!interestAreas) {
+    return NextResponse.json({ error: "请至少选择一个关注方向" }, { status: 400 });
   }
 
   try {
@@ -247,7 +267,7 @@ export async function POST(request: Request) {
           internalContactInfo,
           customerLevel,
           mainVisitorInfo,
-          industry,
+          province,
           customerType,
           interestAreas,
           needSolutionConsulting,
@@ -273,7 +293,7 @@ export async function POST(request: Request) {
             contactName,
             companyName,
             position,
-            industry,
+            province,
             customerType,
             interestAreas,
             needSolutionConsulting,
@@ -291,7 +311,7 @@ export async function POST(request: Request) {
             contactPhone,
             companyName,
             position,
-            industry,
+            province,
             customerType,
             interestAreas,
             needSolutionConsulting,

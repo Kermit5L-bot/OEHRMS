@@ -52,7 +52,7 @@ function getReceptionNeedSummary(params: AppointmentNotification) {
   ];
 
   if (params.giftPreparation) {
-    items.push(`礼品${params.giftPreparation}`);
+    items.push(`礼品${getRequestLabel(params.giftPreparation)}`);
   }
 
   return items.join(" / ");
