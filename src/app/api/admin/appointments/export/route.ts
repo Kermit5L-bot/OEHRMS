@@ -1,4 +1,5 @@
 import type { AppointmentStatus, Prisma } from "@prisma/client";
+import { appointmentExcelFieldLabels, appointmentExcelHeaders } from "@/lib/appointment-excel-fields";
 import { appointmentStatusLabels, formatDate, formatDateTime } from "@/lib/admin-appointments";
 import {
   getCustomerTypeLabel,
@@ -22,9 +23,9 @@ function getDate(value: string | null) {
   return new Date(`${value}T00:00:00.000Z`);
 }
 
-function getSimpleOptionLabel(value?: string | null) {
-  if (value === "yes") return "是";
-  if (value === "no") return "否";
+function getRequestOptionLabel(value?: string | boolean | null) {
+  if (value === true || value === "yes") return "需要";
+  if (value === false || value === "no") return "不需要";
   if (value === "pending") return "待确认";
   return value || "-";
 }
@@ -68,85 +69,59 @@ export async function GET(request: Request) {
     orderBy: [{ createdAt: "desc" }],
   });
 
+  const labels = appointmentExcelFieldLabels;
+
   return createExcelResponse(
     {
       name: "预约管理",
-      columns: [
-        "预约编号",
-        "展厅",
-        "参观日期",
-        "时间段",
-        "客户姓名",
-        "手机号",
-        "公司名称",
-        "职务",
-        "所属省份",
-        "内部对接人",
-        "来访客户级别",
-        "主要来访人员信息",
-        "客户类型",
-        "关注方向",
-        "是否需要方案交流",
-        "是否需要车辆接送",
-        "车辆接送具体要求",
-        "是否需要住宿安排",
-        "住宿具体要求",
-        "是否需要宴请安排",
-        "宴请具体要求",
-        "是否需要准备礼品",
-        "礼品具体要求",
-        "参观人数",
-        "是否需要接待讲解",
-        "参观目的",
-        "客户备注",
-        "状态",
-        "审批人",
-        "审批时间",
-        "审批意见",
-        "拒绝原因",
-        "接待负责人",
-        "接待备注",
-        "跟进记录",
-        "提交时间",
-      ],
-      rows: appointments.map((appointment) => [
-        appointment.appointmentNo,
-        appointment.showroom.name,
-        formatDate(appointment.visitDate),
-        getVisitTimeSlotLabel(appointment.visitTimeSlot),
-        appointment.contactName,
-        appointment.contactPhone,
-        appointment.companyName,
-        appointment.position,
-        getProvinceLabel(appointment.province),
-        appointment.internalContactInfo,
-        appointment.customerLevel,
-        appointment.mainVisitorInfo,
-        getCustomerTypeLabel(appointment.customerType),
-        getInterestAreaLabels(appointment.interestAreas),
-        getSolutionConsultingLabel(appointment.needSolutionConsulting),
-        getSimpleOptionLabel(appointment.needVehicle),
-        appointment.vehicleRequirement,
-        getSimpleOptionLabel(appointment.needAccommodation),
-        appointment.accommodationRequirement,
-        getSimpleOptionLabel(appointment.needDining),
-        appointment.diningRequirement,
-        getSimpleOptionLabel(appointment.giftPreparation),
-        appointment.giftRequirement,
-        appointment.visitorCount,
-        getSimpleOptionLabel(appointment.needGuide ? "yes" : "no"),
-        appointment.visitPurpose,
-        appointment.customerRemark,
-        appointmentStatusLabels[appointment.status],
-        appointment.approvedBy?.realName || appointment.approvedBy?.username,
-        formatDateTime(appointment.approvedAt),
-        appointment.approvalOpinion,
-        appointment.rejectReason,
-        appointment.receptionist,
-        appointment.receptionNote,
-        appointment.followUpNote,
-        formatDateTime(appointment.createdAt),
-      ]),
+      columns: [...appointmentExcelHeaders],
+      rows: appointments.map((appointment) => {
+        const row: Record<string, string | number | null | undefined> = {
+          [labels.appointmentNo]: appointment.appointmentNo,
+          [labels.showroom]: appointment.showroom.name,
+          [labels.visitDate]: formatDate(appointment.visitDate),
+          [labels.visitTimeSlot]: getVisitTimeSlotLabel(appointment.visitTimeSlot),
+          [labels.visitorCount]: appointment.visitorCount,
+          [labels.contactName]: appointment.contactName,
+          [labels.contactPhone]: appointment.contactPhone,
+          [labels.companyName]: appointment.companyName,
+          [labels.position]: appointment.position,
+          [labels.province]: getProvinceLabel(appointment.province),
+          [labels.internalContactInfo]: appointment.internalContactInfo,
+          [labels.customerLevel]: appointment.customerLevel,
+          [labels.mainVisitorInfo]: appointment.mainVisitorInfo,
+          [labels.customerType]: getCustomerTypeLabel(appointment.customerType),
+          [labels.interestAreas]: getInterestAreaLabels(appointment.interestAreas),
+          [labels.needSolutionConsulting]: getSolutionConsultingLabel(appointment.needSolutionConsulting),
+          [labels.needGuide]: getRequestOptionLabel(appointment.needGuide),
+          [labels.visitPurpose]: appointment.visitPurpose,
+          [labels.customerRemark]: appointment.customerRemark,
+          [labels.receptionist]: appointment.receptionist,
+          [labels.receptionNote]: appointment.receptionNote,
+          [labels.actualReceptionLocation]: appointment.actualReceptionLocation,
+          [labels.visitStartTime]: formatDateTime(appointment.visitStartTime),
+          [labels.visitEndTime]: formatDateTime(appointment.visitEndTime),
+          [labels.needVehicle]: getRequestOptionLabel(appointment.needVehicle),
+          [labels.vehicleRequirement]: appointment.vehicleRequirement,
+          [labels.needAccommodation]: getRequestOptionLabel(appointment.needAccommodation),
+          [labels.accommodationRequirement]: appointment.accommodationRequirement,
+          [labels.needDining]: getRequestOptionLabel(appointment.needDining),
+          [labels.diningRequirement]: appointment.diningRequirement,
+          [labels.giftPreparation]: getRequestOptionLabel(appointment.giftPreparation),
+          [labels.giftRequirement]: appointment.giftRequirement,
+          [labels.receptionScheduleNote]: appointment.receptionScheduleNote,
+          [labels.receptionPreparationNote]: appointment.receptionPreparationNote,
+          [labels.followUpNote]: appointment.followUpNote,
+          [labels.status]: appointmentStatusLabels[appointment.status],
+          [labels.approvedBy]: appointment.approvedBy?.realName || appointment.approvedBy?.username,
+          [labels.approvedAt]: formatDateTime(appointment.approvedAt),
+          [labels.approvalOpinion]: appointment.approvalOpinion,
+          [labels.rejectReason]: appointment.rejectReason,
+          [labels.createdAt]: formatDateTime(appointment.createdAt),
+        };
+
+        return appointmentExcelHeaders.map((header) => row[header] ?? "");
+      }),
     },
     `预约管理导出-${new Date().toISOString().slice(0, 10)}.xls`,
   );

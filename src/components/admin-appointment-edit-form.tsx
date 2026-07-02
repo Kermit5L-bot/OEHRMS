@@ -85,7 +85,7 @@ const visitTimeSlotOptions = [
   { value: "afternoon", label: "下午" },
 ];
 
-const editableStatuses = new Set<AppointmentStatus>(["pending", "approved"]);
+const editableStatuses = new Set<AppointmentStatus>(["pending", "approved", "completed"]);
 
 export function AdminAppointmentEditForm({
   appointmentId,
@@ -224,7 +224,7 @@ export function AdminAppointmentEditForm({
         </div>
         {!isEditable ? (
           <p className="rounded-md bg-slate-100 px-4 py-3 text-sm font-medium text-slate-600">
-            当前预约状态不允许编辑，仅待审批和已通过状态可编辑。
+            当前预约状态不允许编辑，仅待审批、已通过和已完成状态可编辑。
           </p>
         ) : null}
         {message ? <p className="rounded-md bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700">{message}</p> : null}

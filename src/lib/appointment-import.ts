@@ -1,119 +1,30 @@
 import type { Prisma, VisitTimeSlot } from "@prisma/client";
 import {
+  appointmentExcelExampleRow,
+  appointmentExcelFieldLabels,
+  appointmentExcelHeaders,
+} from "@/lib/appointment-excel-fields";
+import {
   customerTypeOptions,
   formatDateForAppointmentNo,
   interestAreaOptions,
+  isValidSolutionConsulting,
   phonePattern,
+  provinceOptions,
 } from "@/lib/appointments";
 
-export const appointmentImportHeaders = [
-  "展厅",
-  "参观日期",
-  "参观时间段",
-  "参观人数",
-  "联系人姓名",
-  "联系电话",
-  "公司名称",
-  "职务",
-  "所属省份",
-  "客户类型",
-  "关注方向",
-  "是否需要讲解",
-  "参观目的",
-  "客户备注",
-  "接待人",
-  "接待备注",
-  "实际接待地点",
-  "到访开始时间",
-  "到访结束时间",
-] as const;
-
-export const appointmentImportExampleRow = [
-  "北京公司展厅",
-  "2026-06-18",
-  "上午",
-  "3",
-  "张三",
-  "13800000000",
-  "示例环保科技有限公司",
-  "销售经理",
-  "北京市",
-  "工业企业",
-  "AI大数据、环境监测数智化",
-  "是",
-  "了解展厅方案和产品能力",
-  "客户希望重点了解平台能力",
-  "李四",
-  "客户由销售陪同到访",
-  "北京公司展厅一层",
-  "2026-06-18 09:30",
-  "2026-06-18 11:30",
-];
-
-const chinaProvinceNames = [
-  "北京市",
-  "天津市",
-  "河北省",
-  "山西省",
-  "内蒙古自治区",
-  "辽宁省",
-  "吉林省",
-  "黑龙江省",
-  "上海市",
-  "江苏省",
-  "浙江省",
-  "安徽省",
-  "福建省",
-  "江西省",
-  "山东省",
-  "河南省",
-  "湖北省",
-  "湖南省",
-  "广东省",
-  "广西壮族自治区",
-  "海南省",
-  "重庆市",
-  "四川省",
-  "贵州省",
-  "云南省",
-  "西藏自治区",
-  "陕西省",
-  "甘肃省",
-  "青海省",
-  "宁夏回族自治区",
-  "新疆维吾尔自治区",
-  "香港特别行政区",
-  "澳门特别行政区",
-  "台湾省",
-];
-
-const customerTypeAliases: Record<string, string> = {
-  政府: "government",
-  行业协会: "industry_association",
-  事业单位: "public_institution",
-  第三方运营商: "third_party_operator",
-  工业企业: "industrial_company",
-  "集成商/合作伙伴": "partner",
-  集成商: "partner",
-  合作伙伴: "partner",
-  高校: "school",
-  其他: "other",
-};
-
-const interestAreaAliases: Record<string, string> = {
-  污染源自动监控: "automatic_pollution_monitoring",
-  AI大数据: "ai_big_data",
-  环境监测数智化: "environmental_monitoring_digital",
-  大气与声环境: "atmosphere_noise_environment",
-  餐饮油烟: "catering_oil_fume",
-  危固废管理: "hazardous_solid_waste_management",
-  企业环境软件平台: "enterprise_environment_software_platform",
-  其他: "other",
-};
+export const appointmentImportHeaders = appointmentExcelHeaders;
+export const appointmentImportExampleRow = appointmentExcelExampleRow;
 
 const customerTypeValues = new Set<string>(customerTypeOptions.map((option) => option.value));
+const customerTypeLabelAliases = new Map<string, string>(
+  customerTypeOptions.map((option) => [option.label, option.value]),
+);
 const interestAreaValues = new Set<string>(interestAreaOptions.map((option) => option.value));
-const provinceNames = new Set(chinaProvinceNames);
+const interestAreaLabelAliases = new Map<string, string>(
+  interestAreaOptions.map((option) => [option.label, option.value]),
+);
+const provinceNames = new Set<string>(provinceOptions);
 
 export type ParsedImportRow = {
   showroomName: string;
@@ -125,8 +36,12 @@ export type ParsedImportRow = {
   companyName: string;
   position: string | null;
   province: string;
+  internalContactInfo: string | null;
+  customerLevel: string | null;
+  mainVisitorInfo: string | null;
   customerType: string;
   interestAreas: string | null;
+  needSolutionConsulting: string | null;
   needGuide: boolean;
   visitPurpose: string | null;
   customerRemark: string | null;
@@ -135,6 +50,17 @@ export type ParsedImportRow = {
   actualReceptionLocation: string | null;
   visitStartTime: Date | null;
   visitEndTime: Date | null;
+  needVehicle: string | null;
+  vehicleRequirement: string | null;
+  needAccommodation: string | null;
+  accommodationRequirement: string | null;
+  needDining: string | null;
+  diningRequirement: string | null;
+  giftPreparation: string | null;
+  giftRequirement: string | null;
+  receptionScheduleNote: string | null;
+  receptionPreparationNote: string | null;
+  followUpNote: string | null;
 };
 
 export function normalizeImportText(value: unknown) {
@@ -154,6 +80,15 @@ function parseExcelSerialDate(value: number) {
   return Number.isNaN(date.getTime()) ? null : date;
 }
 
+function normalizeDateText(value: unknown) {
+  return normalizeImportText(value)
+    .replace(/[年月./]/g, "-")
+    .replace(/日/g, "")
+    .replace("T", " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 export function parseImportDate(value: unknown) {
   if (value instanceof Date && !Number.isNaN(value.getTime())) {
     return value.toISOString().slice(0, 10);
@@ -163,8 +98,8 @@ export function parseImportDate(value: unknown) {
     return date ? date.toISOString().slice(0, 10) : null;
   }
 
-  const text = normalizeImportText(value);
-  const match = text.match(/^(\d{4})[-/.年](\d{1,2})[-/.月](\d{1,2})日?$/);
+  const text = normalizeDateText(value);
+  const match = text.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
   if (!match) return null;
   const [, year, month, day] = match;
   const normalized = `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
@@ -176,11 +111,10 @@ export function parseImportDateTime(value: unknown) {
   if (value instanceof Date && !Number.isNaN(value.getTime())) return value;
   if (typeof value === "number") return parseExcelSerialDate(value);
 
-  const text = normalizeImportText(value);
+  const text = normalizeDateText(value);
   if (!text) return null;
 
-  const normalized = text.replace(/\//g, "-").replace("T", " ");
-  const match = normalized.match(/^(\d{4})-(\d{1,2})-(\d{1,2})(?:\s+(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?)?$/);
+  const match = text.match(/^(\d{4})-(\d{1,2})-(\d{1,2})(?:\s+(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?)?$/);
   if (!match) return null;
   const [, year, month, day, hour = "0", minute = "0", second = "0"] = match;
   const date = new Date(
@@ -210,11 +144,20 @@ export function parseNeedGuide(value: unknown) {
   return null;
 }
 
+function parseRequestOption(value: unknown) {
+  const text = normalizeImportText(value).toLowerCase();
+  if (!text) return "pending";
+  if (["是", "需要", "yes", "y", "true", "1"].includes(text)) return "yes";
+  if (["否", "不需要", "no", "n", "false", "0"].includes(text)) return "no";
+  if (["待确认", "待定", "pending"].includes(text)) return "pending";
+  return null;
+}
+
 export function parseCustomerType(value: unknown) {
   const text = normalizeImportText(value);
   if (!text) return null;
   if (customerTypeValues.has(text)) return text;
-  return customerTypeAliases[text] || null;
+  return customerTypeLabelAliases.get(text) || null;
 }
 
 export function parseInterestAreas(value: unknown) {
@@ -227,7 +170,7 @@ export function parseInterestAreas(value: unknown) {
     .filter(Boolean)
     .map((item) => {
       if (interestAreaValues.has(item)) return item;
-      return interestAreaAliases[item] || null;
+      return interestAreaLabelAliases.get(item) || null;
     });
 
   if (values.some((item) => !item)) return { error: "关注方向不合法" };
@@ -243,21 +186,27 @@ export function parseProvince(value: unknown) {
 }
 
 export function parseAppointmentImportRow(getValue: (header: string) => unknown): { data?: ParsedImportRow; error?: string } {
-  const showroomName = normalizeImportText(getValue("展厅"));
-  const visitDate = parseImportDate(getValue("参观日期"));
-  const visitTimeSlot = parseVisitTimeSlot(getValue("参观时间段"));
-  const visitorCount = Number(normalizeImportText(getValue("参观人数")));
-  const contactName = normalizeImportText(getValue("联系人姓名"));
-  const contactPhone = normalizeImportText(getValue("联系电话"));
-  const companyName = normalizeImportText(getValue("公司名称"));
-  const province = parseProvince(getValue("所属省份"));
-  const customerType = parseCustomerType(getValue("客户类型"));
-  const interestAreas = parseInterestAreas(getValue("关注方向"));
-  const needGuide = parseNeedGuide(getValue("是否需要讲解"));
-  const visitStartTimeText = normalizeImportText(getValue("到访开始时间"));
-  const visitEndTimeText = normalizeImportText(getValue("到访结束时间"));
-  const visitStartTime = parseImportDateTime(getValue("到访开始时间"));
-  const visitEndTime = parseImportDateTime(getValue("到访结束时间"));
+  const labels = appointmentExcelFieldLabels;
+  const showroomName = normalizeImportText(getValue(labels.showroom));
+  const visitDate = parseImportDate(getValue(labels.visitDate));
+  const visitTimeSlot = parseVisitTimeSlot(getValue(labels.visitTimeSlot));
+  const visitorCount = Number(normalizeImportText(getValue(labels.visitorCount)));
+  const contactName = normalizeImportText(getValue(labels.contactName));
+  const contactPhone = normalizeImportText(getValue(labels.contactPhone));
+  const companyName = normalizeImportText(getValue(labels.companyName));
+  const province = parseProvince(getValue(labels.province));
+  const customerType = parseCustomerType(getValue(labels.customerType));
+  const interestAreas = parseInterestAreas(getValue(labels.interestAreas));
+  const needSolutionConsulting = parseRequestOption(getValue(labels.needSolutionConsulting));
+  const needGuide = parseNeedGuide(getValue(labels.needGuide));
+  const needVehicle = parseRequestOption(getValue(labels.needVehicle));
+  const needAccommodation = parseRequestOption(getValue(labels.needAccommodation));
+  const needDining = parseRequestOption(getValue(labels.needDining));
+  const giftPreparation = parseRequestOption(getValue(labels.giftPreparation));
+  const visitStartTimeText = normalizeImportText(getValue(labels.visitStartTime));
+  const visitEndTimeText = normalizeImportText(getValue(labels.visitEndTime));
+  const visitStartTime = parseImportDateTime(getValue(labels.visitStartTime));
+  const visitEndTime = parseImportDateTime(getValue(labels.visitEndTime));
 
   if (!showroomName) return { error: "展厅不能为空" };
   if (!visitDate) return { error: "参观日期格式不正确" };
@@ -269,7 +218,14 @@ export function parseAppointmentImportRow(getValue: (header: string) => unknown)
   if (!province) return { error: "所属省份不属于中国 34 个省级行政区" };
   if (!customerType) return { error: "客户类型不合法" };
   if (interestAreas && "error" in interestAreas) return { error: interestAreas.error };
+  if (needSolutionConsulting === null || !isValidSolutionConsulting(needSolutionConsulting)) {
+    return { error: "是否需要方案交流不合法，请填写需要/不需要/待确认" };
+  }
   if (needGuide === null) return { error: "是否需要讲解不合法，请填写是/否" };
+  if (needVehicle === null) return { error: "是否需要车辆接送不合法，请填写需要/不需要/待确认" };
+  if (needAccommodation === null) return { error: "是否需要住宿安排不合法，请填写需要/不需要/待确认" };
+  if (needDining === null) return { error: "是否需要宴请安排不合法，请填写需要/不需要/待确认" };
+  if (giftPreparation === null) return { error: "是否需要准备礼品不合法，请填写需要/不需要/待确认" };
   if (visitStartTimeText && !visitStartTime) return { error: "到访开始时间格式不正确" };
   if (visitEndTimeText && !visitEndTime) return { error: "到访结束时间格式不正确" };
 
@@ -282,18 +238,33 @@ export function parseAppointmentImportRow(getValue: (header: string) => unknown)
       contactName,
       contactPhone,
       companyName,
-      position: optionalText(getValue("职务")),
+      position: optionalText(getValue(labels.position)),
       province,
+      internalContactInfo: optionalText(getValue(labels.internalContactInfo)),
+      customerLevel: optionalText(getValue(labels.customerLevel)),
+      mainVisitorInfo: optionalText(getValue(labels.mainVisitorInfo)),
       customerType,
       interestAreas: interestAreas?.value || null,
+      needSolutionConsulting,
       needGuide,
-      visitPurpose: optionalText(getValue("参观目的")),
-      customerRemark: optionalText(getValue("客户备注")),
-      receptionist: optionalText(getValue("接待人")),
-      receptionNote: optionalText(getValue("接待备注")),
-      actualReceptionLocation: optionalText(getValue("实际接待地点")),
+      visitPurpose: optionalText(getValue(labels.visitPurpose)),
+      customerRemark: optionalText(getValue(labels.customerRemark)),
+      receptionist: optionalText(getValue(labels.receptionist)),
+      receptionNote: optionalText(getValue(labels.receptionNote)),
+      actualReceptionLocation: optionalText(getValue(labels.actualReceptionLocation)),
       visitStartTime,
       visitEndTime,
+      needVehicle,
+      vehicleRequirement: optionalText(getValue(labels.vehicleRequirement)),
+      needAccommodation,
+      accommodationRequirement: optionalText(getValue(labels.accommodationRequirement)),
+      needDining,
+      diningRequirement: optionalText(getValue(labels.diningRequirement)),
+      giftPreparation,
+      giftRequirement: optionalText(getValue(labels.giftRequirement)),
+      receptionScheduleNote: optionalText(getValue(labels.receptionScheduleNote)),
+      receptionPreparationNote: optionalText(getValue(labels.receptionPreparationNote)),
+      followUpNote: optionalText(getValue(labels.followUpNote)),
     },
   };
 }

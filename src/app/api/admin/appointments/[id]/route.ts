@@ -288,7 +288,11 @@ export async function PUT(request: Request, { params }: RouteContext) {
       if (!existingAppointment) {
         throw new Error("APPOINTMENT_NOT_FOUND");
       }
-      if (existingAppointment.status !== "pending" && existingAppointment.status !== "approved") {
+      if (
+        existingAppointment.status !== "pending" &&
+        existingAppointment.status !== "approved" &&
+        existingAppointment.status !== "completed"
+      ) {
         throw new Error("APPOINTMENT_NOT_EDITABLE");
       }
 

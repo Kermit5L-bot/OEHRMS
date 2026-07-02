@@ -16,7 +16,7 @@ type ActionMessage = {
   text: string;
 };
 
-type ActiveDialog = "approve" | "reject" | null;
+type ActiveDialog = "approve" | "reject" | "complete" | null;
 
 export function AdminAppointmentActions({ appointmentId, status }: AdminAppointmentActionsProps) {
   const router = useRouter();
@@ -106,7 +106,7 @@ export function AdminAppointmentActions({ appointmentId, status }: AdminAppointm
               <button
                 type="button"
                 disabled={isSubmitting !== null}
-                onClick={() => postAction(`/api/admin/appointments/${appointmentId}/complete`)}
+                onClick={() => setActiveDialog("complete")}
                 className="inline-flex min-h-10 items-center justify-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-slate-300"
               >
                 <FileCheck2 className="h-4 w-4" />
@@ -149,7 +149,66 @@ export function AdminAppointmentActions({ appointmentId, status }: AdminAppointm
           onConfirm={() => postAction(`/api/admin/appointments/${appointmentId}/reject`, { rejectReason })}
         />
       ) : null}
+
+      {activeDialog === "complete" ? (
+        <ConfirmDialog
+          title="确认标记已完成"
+          description="确认后该预约状态会变为已完成，历史预约记录会保留。已完成后仍可编辑预约信息，但状态流转不会自动回退。"
+          confirmText={isSubmitting?.includes("complete") ? "提交中..." : "确认完成"}
+          confirmClassName="bg-blue-600 hover:bg-blue-700"
+          disabled={isSubmitting !== null}
+          onCancel={() => setActiveDialog(null)}
+          onConfirm={() => postAction(`/api/admin/appointments/${appointmentId}/complete`)}
+        />
+      ) : null}
     </>
+  );
+}
+
+function ConfirmDialog({
+  title,
+  description,
+  confirmText,
+  confirmClassName,
+  disabled,
+  onCancel,
+  onConfirm,
+}: {
+  title: string;
+  description: string;
+  confirmText: string;
+  confirmClassName: string;
+  disabled: boolean;
+  onCancel: () => void;
+  onConfirm: () => void;
+}) {
+  return (
+    <div className="fixed inset-0 z-[60] flex items-end justify-center bg-slate-950/35 px-4 py-6 sm:items-center">
+      <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-2xl">
+        <div>
+          <h2 className="text-lg font-bold text-slate-950">{title}</h2>
+          <p className="mt-2 text-sm leading-6 text-slate-500">{description}</p>
+        </div>
+        <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+          <button
+            type="button"
+            disabled={disabled}
+            onClick={onCancel}
+            className="inline-flex min-h-10 items-center justify-center rounded-md border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            取消
+          </button>
+          <button
+            type="button"
+            disabled={disabled}
+            onClick={onConfirm}
+            className={`inline-flex min-h-10 items-center justify-center rounded-md px-4 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:bg-slate-300 ${confirmClassName}`}
+          >
+            {confirmText}
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }
 
